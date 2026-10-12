@@ -52,6 +52,18 @@ graded. Commit it with the session's work, never in one final batch commit.
 - UI → hooks → **service contracts** (`authService`, `userService`, `tweetService`,
   `followService`) provided by `ServicesProvider`. Components never import Firebase or mock data.
   M1 ships mock implementations; M2 swaps in Firebase ones without changing components.
+  The contracts live in `src/services/contracts.js`, and `src/services/createAppServices.js`
+  is the only place that picks an implementation.
+- Business rules (validation, limits, sort keys) are pure functions in `src/domain/`, shared by
+  every implementation. Failures throw `ServiceError` with a `code`; the UI translates the
+  code and never parses messages.
+- Lists are **cursor-paginated** in the contract (`{ items, nextCursor, total }`), so the UI
+  never slices arrays and Firestore can use `startAfter`.
+- Write methods take the acting user's id, and it must be the logged-in user
+  (`PERMISSION_DENIED` otherwise). The mock enforces it because the Firestore rules will.
+- Mock data persists in `localStorage` (`telegraph.mock.v1`). All demo accounts use the password
+  `telegraph` (e.g. `@ada`). Remove that key to go back to the seed. One tab at a time:
+  two tabs writing at once overwrite each other (mock-only limitation).
 - Colors, fonts, radii: CSS custom properties from `design-system.md` only. Themes switch with
   `data-theme` on `<html>`, dark by default.
 - **One app, two palettes:** a theme changes only color-token values. Never branch markup, icons,
