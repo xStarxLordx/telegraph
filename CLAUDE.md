@@ -24,20 +24,20 @@ update them.
 
 ## General requirements (graded)
 
-| ID | Rule |
-|----|------|
-| G-01 | All code identifiers, comments and documentation in **English**. User-visible copy is the exception (G-07). |
-| G-02 | Branches for every feature and fix: `feature/<task-id>-<slug>`, `fix/<slug>`; `develop` = integration, `main` = deliveries. |
+| ID   | Rule                                                                                                                                                                                                            |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| G-01 | All code identifiers, comments and documentation in **English**. User-visible copy is the exception (G-07).                                                                                                     |
+| G-02 | Branches for every feature and fix: `feature/<task-id>-<slug>`, `fix/<slug>`; `develop` = integration, `main` = deliveries.                                                                                     |
 | G-03 | Clear, concise commits (Conventional Commits, imperative, ≤ 72 chars) and merges only through **pull requests** with a review (working solo: self-review the PR against its task's "Done when" before merging). |
-| G-04 | Airbnb JavaScript Style Guide, enforced by ESLint (`npm run lint` must pass). |
-| G-05 | Modular, reusable components; business logic in services/hooks, never in JSX; documentation kept current. |
-| G-06 | Every tweet is shown as: `Full Name, @username - date and time` on the first line and the body below, between separator rules. Single source: `TweetCard`. |
-| G-07 | Every visible string goes through i18next (`es` default, `en`). No hard-coded copy. *(Project decision, not from the PDF.)* |
-| G-08 | UX/UI is graded as a differentiator: follow `docs/design-system.md` in both themes. |
-| G-09 | Lists and feeds paginate at **10 items** per page (`PAGE_SIZE`). User lists sort alphabetically by full name; tweets sort newest first. |
-| G-10 | Tweets are limited to **280 characters** (`MAX_TWEET_LENGTH`), enforced in the UI, the service and the Firestore rules. |
-| G-11 | `bitacora.md` (AI log) at the repo root: append-only, committed throughout the project. See below. |
-| G-12 | Graded on visible repo activity (commits, PRs, issues, reviews): no participation, no grade. |
+| G-04 | Airbnb JavaScript Style Guide, enforced by ESLint (`npm run lint` must pass).                                                                                                                                   |
+| G-05 | Modular, reusable components; business logic in services/hooks, never in JSX; documentation kept current.                                                                                                       |
+| G-06 | Every tweet is shown as: `Full Name, @username - date and time` on the first line and the body below, between separator rules. Single source: `TweetCard`.                                                      |
+| G-07 | Every visible string goes through i18next (`es` default, `en`). No hard-coded copy. _(Project decision, not from the PDF.)_                                                                                     |
+| G-08 | UX/UI is graded as a differentiator: follow `docs/design-system.md` in both themes.                                                                                                                             |
+| G-09 | Lists and feeds paginate at **10 items** per page (`PAGE_SIZE`). User lists sort alphabetically by full name; tweets sort newest first.                                                                         |
+| G-10 | Tweets are limited to **280 characters** (`MAX_TWEET_LENGTH`), enforced in the UI, the service and the Firestore rules.                                                                                         |
+| G-11 | `bitacora.md` (AI log) at the repo root: append-only, committed throughout the project. See below.                                                                                                              |
+| G-12 | Graded on visible repo activity (commits, PRs, issues, reviews): no participation, no grade.                                                                                                                    |
 
 ## AI log — `bitacora.md` (mandatory while AI is used)
 
@@ -75,10 +75,20 @@ graded. Commit it with the session's work, never in one final batch commit.
 - **Feed pagination over chunked queries:** keep one cursor per chunk. Each page fetches up to
   10 from every chunk, merges them, keeps the 10 newest and advances only the cursors it
   consumed (M2-12).
+- **ESLint stays on 9.x.** Airbnb comes from `eslint-config-airbnb-extended`, which doesn't support
+  ESLint 10 yet. The official `eslint-config-airbnb` is stuck on ESLint 8. Never run
+  `npm audit fix --force`: it downgrades the Airbnb config. The `braces` advisories are dev-only
+  (see README › Code style).
+- Airbnb enforces `react/prop-types` in plain JS: components declare `propTypes` (add the
+  `prop-types` package with the first component that takes props).
 
 ## Repository etiquette
 
-- Repo state: **not initialized yet** (no Git, no remote). Update this line in M1-01 with the
-  remote URL.
+- Remote: <https://github.com/xStarxLordx/telegraph> (public). Default branch on GitHub is
+  `develop`, so PRs target it; `main` only receives delivery merges.
+- **Account trap:** this machine's active `gh`/Git identity is a work account. The repo sets its
+  author (`Francisco López <lopezfrancisco1506@gmail.com>`) and a credential helper that uses the
+  `xStarxLordx` token in local `.git/config`. Never commit or push with the global identity, and
+  never run `gh auth switch` for this repo. Use `GH_TOKEN=$(gh auth token -u xStarxLordx) gh ...`.
 - Never commit, push or open a PR without the student's explicit confirmation.
 - No AI signatures or `Co-Authored-By` trailers in commits; AI use is recorded in `bitacora.md`.
