@@ -1,0 +1,34 @@
+// ESLint flat config: Airbnb style guide (via eslint-config-airbnb-extended, the flat-config
+// port of the official rules) + React Refresh for Vite + Prettier last, so formatting rules
+// are owned by Prettier and never conflict with ESLint.
+import js from '@eslint/js';
+import { configs, plugins } from 'eslint-config-airbnb-extended';
+import prettierConfig from 'eslint-config-prettier/flat';
+import reactRefresh from 'eslint-plugin-react-refresh';
+import globals from 'globals';
+
+// React 17+ JSX transform (used by Vite): React no longer needs to be in scope.
+// Taken from the same eslint-plugin-react instance Airbnb registers, to avoid a duplicate plugin.
+const reactJsxRuntime = plugins.react.plugins.react.configs.flat['jsx-runtime'];
+
+export default [
+  { ignores: ['dist/', 'node_modules/', 'coverage/'] },
+  js.configs.recommended,
+  plugins.stylistic,
+  plugins.importX,
+  plugins.react,
+  plugins.reactA11y,
+  plugins.reactHooks,
+  ...configs.base.recommended,
+  ...configs.react.recommended,
+  reactJsxRuntime,
+  reactRefresh.configs.vite,
+  {
+    name: 'telegraph/browser-globals',
+    files: ['src/**/*.{js,jsx}'],
+    languageOptions: {
+      globals: globals.browser,
+    },
+  },
+  prettierConfig,
+];

@@ -110,3 +110,41 @@ No se editan ni se borran entradas anteriores.
 - `.gitignore`, `.gitattributes`, `.github/pull_request_template.md`, `README.md` (creados)
 - `docs/milestone-1.md` (M1-01: react-router v8)
 - `bitacora.md` (nueva entrada)
+
+---
+
+## 2026-10-12 12:24 (UTC-5) — M1-02: ESLint (Airbnb) y Prettier
+
+- **Herramienta:** Claude Code (CLI)
+- **Modelo:** Claude Opus 5.5 (`claude-opus-5-5`)
+
+### Mensajes del estudiante (textuales)
+
+1. > Sí, arranca la M1-02
+
+### Resumen de la respuesta
+
+- Evidencia del registro de npm: `eslint-config-airbnb` 19.0.4 solo soporta ESLint 7/8 (fuera de
+  soporte); `eslint-config-airbnb-extended` 3.3.0 (port flat-config) requiere ESLint 9; ESLint 10
+  aún no es compatible. Decisión: ESLint 9.39.5 + airbnb-extended + Prettier 3 +
+  eslint-config-prettier + eslint-plugin-react-refresh, con el preset `jsx-runtime` de React.
+- Se eliminó oxlint y se reemplazó el demo de Vite por un componente placeholder (el demo violaba
+  reglas de Airbnb y se iba a reemplazar de todas formas).
+- Se agregaron los scripts `lint`, `lint:fix`, `format` y `format:check`, y se formateó el repo
+  (los cambios en la documentación son solo de formato: alineación de tablas y énfasis).
+- Verificación: 291 reglas activas; `eslint-config-prettier` no detecta conflictos; un archivo
+  roto a propósito falló con 11 errores (var, props mutadas, deps de hooks, alt, extensiones,
+  prop-types, fast refresh); `npm run lint`, `format:check` y `build` en verde.
+- `npm audit`: 5 avisos high en `braces` (dependencia transitiva, solo herramientas de
+  desarrollo); `npm audit --omit=dev` sin vulnerabilidades. Se documentó en el README.
+- Incidente: un comando con `git stash` dejó el stash sin aplicar; se verificó su contenido y se
+  restauró sin pérdida de cambios.
+
+### Archivos creados o modificados
+
+- `eslint.config.js`, `.prettierrc.json`, `.prettierignore` (creados)
+- `.oxlintrc.json`, `src/App.css`, `src/assets/*`, `public/icons.svg` (eliminados)
+- `package.json`, `package-lock.json`, `src/App.jsx`, `src/main.jsx`, `src/index.css`,
+  `vite.config.js` (modificados)
+- `README.md` (sección Code style), `CLAUDE.md` (trampas de ESLint y remoto), `docs/*.md`
+  (formato y seguimiento de M1-01/M1-02), `bitacora.md` (nueva entrada)

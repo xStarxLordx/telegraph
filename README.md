@@ -24,12 +24,34 @@ npm run dev
 
 ## Scripts
 
-| Script | Description |
-|--------|-------------|
-| `npm run dev` | Start the development server |
-| `npm run build` | Build for production into `dist/` |
-| `npm run preview` | Preview the production build |
-| `npm run lint` | Lint the source code |
+| Script                 | Description                       |
+| ---------------------- | --------------------------------- |
+| `npm run dev`          | Start the development server      |
+| `npm run build`        | Build for production into `dist/` |
+| `npm run preview`      | Preview the production build      |
+| `npm run lint`         | Lint the source code              |
+| `npm run lint:fix`     | Lint and auto-fix what ESLint can |
+| `npm run format`       | Format every file with Prettier   |
+| `npm run format:check` | Check formatting without writing  |
+
+## Code style
+
+The project follows the [Airbnb JavaScript Style Guide](https://github.com/airbnb/javascript),
+enforced by ESLint, with Prettier owning formatting.
+
+- **ESLint 9** (`maintenance` line) with
+  [`eslint-config-airbnb-extended`](https://eslint-airbnb-extended.nishargshah.dev/), the
+  flat-config port of the official Airbnb rules (base, React, JSX a11y and hooks). The official
+  `eslint-config-airbnb` only supports ESLint 7/8, which are end-of-life, and
+  `airbnb-extended` doesn't support ESLint 10 yet. Upgrade ESLint once it does.
+- The React 17+ JSX runtime preset disables `react/react-in-jsx-scope`. `eslint-plugin-react-refresh`
+  guards Vite's hot reload.
+- **Prettier 3** (`.prettierrc.json`: single quotes, semicolons, trailing commas, 100 columns,
+  LF) runs last through `eslint-config-prettier`, so the two tools never disagree.
+- `npm audit` reports high-severity advisories in `braces`, pulled in through
+  `@next/eslint-plugin-next`, a dependency of the Airbnb config. They affect **dev tooling only**:
+  `npm audit --omit=dev` is clean. Don't run `npm audit fix --force`, because it downgrades the
+  Airbnb config to an unusable 0.1.x.
 
 ## Project documentation
 
@@ -46,5 +68,5 @@ npm run dev
 - Commits follow [Conventional Commits](https://www.conventionalcommits.org/).
 - Every change reaches `develop` through a pull request (see the PR template).
 
-<!-- Sections to complete in later tasks: architecture (M1-03), linting (M1-02),
+<!-- Sections to complete in later tasks: architecture (M1-03),
      Firebase setup and data model (M2-01, M2-02), feed limitations (M2-12). -->

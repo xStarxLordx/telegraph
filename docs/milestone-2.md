@@ -11,25 +11,26 @@ General rules `G-xx` are defined in [`../CLAUDE.md`](../CLAUDE.md#general-requir
 
 ## Requirements (from the PDF)
 
-| ID | Requirement |
-|----|-------------|
-| R2.1 | **User registration**: implement the logic to register a new user. |
-| R2.2 | Registration must reject a **username** or **email** that already exists. |
-| R2.3 | **Login**: implement login with **username** and password. |
-| R2.4 | Integrate login with **Google** (or another provider). |
-| R2.5 | **Publish tweets**: implement the logic to publish a tweet. |
-| R2.6 | A tweet must not exceed **280 characters**. |
-| R2.7 | Tell the user whether the tweet was published successfully. |
-| R2.8 | **Counters**: show the number of followers and following on the user's home page. |
-| R2.9 | **View tweets of followers and following**: be able to see the tweets of the people in both lists. |
-| R2.10 | **Follow by username**: a form to follow another user by their username. |
-| R2.11 | If I already follow that user, detect it and tell me. |
+| ID    | Requirement                                                                                        |
+| ----- | -------------------------------------------------------------------------------------------------- |
+| R2.1  | **User registration**: implement the logic to register a new user.                                 |
+| R2.2  | Registration must reject a **username** or **email** that already exists.                          |
+| R2.3  | **Login**: implement login with **username** and password.                                         |
+| R2.4  | Integrate login with **Google** (or another provider).                                             |
+| R2.5  | **Publish tweets**: implement the logic to publish a tweet.                                        |
+| R2.6  | A tweet must not exceed **280 characters**.                                                        |
+| R2.7  | Tell the user whether the tweet was published successfully.                                        |
+| R2.8  | **Counters**: show the number of followers and following on the user's home page.                  |
+| R2.9  | **View tweets of followers and following**: be able to see the tweets of the people in both lists. |
+| R2.10 | **Follow by username**: a form to follow another user by their username.                           |
+| R2.11 | If I already follow that user, detect it and tell me.                                              |
 
 ---
 
 ## Tasks
 
 ### M2-01 · Firebase project and SDK setup
+
 **Description:** Create the Firebase project, register the web app, enable Authentication
 (Email/Password and Google providers) and Cloud Firestore. Read the web config from
 `VITE_FIREBASE_*` variables in `.env.local` (ignored by git) and commit a `.env.example`.
@@ -42,6 +43,7 @@ Emulator Suite for local development and tests.
 error instead of a blank page.
 
 ### M2-02 · Firestore data model, indexes and security rules
+
 **Description:** Define and document (in the README) the collections:
 `users/{uid}` (fullName, username, usernameLower, email, createdAt),
 `usernames/{usernameLower}` (uid, email: one document per username to guarantee uniqueness and
@@ -62,6 +64,7 @@ follower; nobody can follow themselves. Add the composite indexes the queries ne
 SDK is rejected.
 
 ### M2-03 · Firebase implementations of the service contracts
+
 **Description:** Implement `authService`, `userService`, `tweetService` and `followService`
 against Firebase with **the same contracts** as the M1 mocks, and switch the `ServicesProvider`
 to them (keep the mocks for tests and demos). Map Firebase error codes to i18n keys in one place
@@ -72,6 +75,7 @@ to them (keep the mocks for tests and demos). Map Firebase error codes to i18n k
 **Done when:** no page or component changed to make the switch, only the provider wiring.
 
 ### M2-04 · User registration logic
+
 **Description:** Auth calls can't run inside a Firestore transaction, so the flow is:
 (1) pre-check that `usernames/{usernameLower}` doesn't exist (fast feedback);
 (2) `createUserWithEmailAndPassword` (a duplicate email fails here with
@@ -85,6 +89,7 @@ next to the matching field.
 nothing; a valid registration logs in and lands on home.
 
 ### M2-05 · Login with username and password
+
 **Description:** Firebase Auth signs in with email, not username. Resolve
 `usernames/{usernameLower}` → email, then call `signInWithEmailAndPassword`. Show one generic
 error ("invalid username or password") for both an unknown username and a wrong password, so the
@@ -94,6 +99,7 @@ form doesn't reveal which usernames exist.
 **Done when:** valid credentials log in; both failure cases show the same message.
 
 ### M2-06 · Google sign-in and username onboarding
+
 **Description:** `signInWithPopup` with `GoogleAuthProvider`. On a first-time Google login there is
 no username yet: send the user to a **"choose your username"** step (same validation and
 uniqueness transaction as M2-04) before entering the app. Returning Google users go straight to
@@ -104,6 +110,7 @@ home.
 the step.
 
 ### M2-07 · Real auth session and route guards
+
 **Description:** `AuthProvider` subscribes to `onAuthStateChanged`, loads the `users/{uid}`
 profile and exposes `{ user, profile, loading }`. `ProtectedRoute` waits for `loading` to finish
 (spinner, no flash of `/login`). Logout calls `signOut` and returns to `/login`.
@@ -113,6 +120,7 @@ profile and exposes `{ user, profile, loading }`. `ProtectedRoute` waits for `lo
 logged-in user who opens `/login` is sent to home.
 
 ### M2-08 · Publish tweet logic
+
 **Description:** `tweetService.publish` writes `tweets/{id}` with `serverTimestamp()` and the
 author's denormalized name and username. The 280-character limit is enforced in three places
 from one constant `MAX_TWEET_LENGTH`: the composer's counter, the service and the security rules.
@@ -126,6 +134,7 @@ feed. On error, show the message and keep the text.
 sent; the success and error notifications appear.
 
 ### M2-09 · Followers and following counters on home
+
 **Description:** Compute the counters with Firestore aggregation queries (`getCountFromServer`
 over `follows` where `followeeId == uid` / `followerId == uid`) inside a reusable
 `useFollowCounts(uid)` hook, so stored counters can't drift. Refresh after follow actions.
@@ -136,6 +145,7 @@ over `follows` where `followeeId == uid` / `followerId == uid`) inside a reusabl
 someone.
 
 ### M2-10 · Follow a user by username
+
 **Description:** Form on home (designed in the mockup as "Seguir por usuario"):
 input + "Seguir" button. `followService.followByUsername` resolves the username and checks, in
 order: the user exists → it is not me → I don't already follow them. Then it creates
@@ -148,6 +158,7 @@ can't follow yourself, **"You already follow @x"**, success.
 a second document.
 
 ### M2-11 · View tweets of followers and following
+
 **Description:** Wire `/users/:username` to Firestore: load the profile by username and their
 tweets (`authorId == uid`, `orderBy createdAt desc`). Every user in the followers and following
 lists links to this page, so the tweets of anyone in either list can be viewed.
@@ -157,6 +168,7 @@ lists links to this page, so the tweets of anyone in either list can be viewed.
 **Done when:** clicking any user in either list opens their tweets in the right order.
 
 ### M2-12 · Real feed data
+
 **Description:** Feed = my tweets + those of the users I follow, newest first. Firestore limits
 `in` filters to 30 values, so split the author IDs into chunks of up to 30, query each chunk
 with `orderBy createdAt desc`, and merge the results by date. **Pagination:** keep one cursor per
@@ -170,6 +182,7 @@ limitation and the chosen approach in the README.
 (seed script or emulator).
 
 ### M2-13 · Tests for validation and services
+
 **Description:** Unit tests (Vitest) for the pure validators (username format, email, password,
 tweet length, including emoji and surrogate pairs) and `mapFirebaseError`. Against the Firebase
 emulator: check that the rules' `size()` agrees with `[...text].length` for emoji at the 280
@@ -179,6 +192,7 @@ limit, and (optionally) test registration uniqueness and follow-twice.
 **Done when:** `npm test` is green and covers every validation branch.
 
 ### M2-14 · Milestone 2 wrap-up
+
 **Description:** Update the README (Firebase setup, `.env.example`, data model, feed
 limitation), check that every new string exists in `es` and `en`, run lint and tests, merge to
 `develop` through PRs, and add the bitácora entries.
@@ -192,19 +206,19 @@ limitation), check that every new string exists in `es` and `en`, run lint and t
 
 Mark a task with `X` when it is done and write the date (`YYYY-MM-DD`). Notes are optional.
 
-| Done | ID | Task | Date | Notes |
-|:----:|----|------|------|-------|
-| [ ] | M2-01 | Firebase project and SDK setup | | |
-| [ ] | M2-02 | Firestore data model, indexes and security rules | | |
-| [ ] | M2-03 | Firebase implementations of the service contracts | | |
-| [ ] | M2-04 | User registration logic | | |
-| [ ] | M2-05 | Login with username and password | | |
-| [ ] | M2-06 | Google sign-in and username onboarding | | |
-| [ ] | M2-07 | Real auth session and route guards | | |
-| [ ] | M2-08 | Publish tweet logic | | |
-| [ ] | M2-09 | Followers and following counters on home | | |
-| [ ] | M2-10 | Follow a user by username | | |
-| [ ] | M2-11 | View tweets of followers and following | | |
-| [ ] | M2-12 | Real feed data | | |
-| [ ] | M2-13 | Tests for validation and services | | |
-| [ ] | M2-14 | Milestone 2 wrap-up | | |
+| Done | ID    | Task                                              | Date | Notes |
+| :--: | ----- | ------------------------------------------------- | ---- | ----- |
+| [ ]  | M2-01 | Firebase project and SDK setup                    |      |       |
+| [ ]  | M2-02 | Firestore data model, indexes and security rules  |      |       |
+| [ ]  | M2-03 | Firebase implementations of the service contracts |      |       |
+| [ ]  | M2-04 | User registration logic                           |      |       |
+| [ ]  | M2-05 | Login with username and password                  |      |       |
+| [ ]  | M2-06 | Google sign-in and username onboarding            |      |       |
+| [ ]  | M2-07 | Real auth session and route guards                |      |       |
+| [ ]  | M2-08 | Publish tweet logic                               |      |       |
+| [ ]  | M2-09 | Followers and following counters on home          |      |       |
+| [ ]  | M2-10 | Follow a user by username                         |      |       |
+| [ ]  | M2-11 | View tweets of followers and following            |      |       |
+| [ ]  | M2-12 | Real feed data                                    |      |       |
+| [ ]  | M2-13 | Tests for validation and services                 |      |       |
+| [ ]  | M2-14 | Milestone 2 wrap-up                               |      |       |
