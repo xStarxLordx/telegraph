@@ -148,3 +148,60 @@ No se editan ni se borran entradas anteriores.
   `vite.config.js` (modificados)
 - `README.md` (sección Code style), `CLAUDE.md` (trampas de ESLint y remoto), `docs/*.md`
   (formato y seguimiento de M1-01/M1-02), `bitacora.md` (nueva entrada)
+
+---
+
+## 2026-10-12 15:22 (UTC-5) — M1-03: arquitectura y servicios mock
+
+- **Herramienta:** Claude Code (CLI)
+- **Modelo:** Claude Opus 5.5 (`claude-opus-5-5`)
+
+### Mensajes del estudiante (textuales)
+
+1. > Ya hice el merge, arranca la M1-03
+2. Respuestas a las decisiones del plan:
+   > Paginación: "Cursor (Recommended)" · Persistencia: "localStorage (Recommended)" · Tests: "Sí, Vitest ahora (Recommended)"
+
+### Resumen de la respuesta
+
+- Se definieron los contratos de los 4 servicios en `src/services/contracts.js` (JSDoc). Todos
+  los métodos son asíncronos y las listas usan paginación por cursor (`{ items, nextCursor, total }`).
+- Reglas de negocio puras en `src/domain/` (carpeta nueva, no estaba en el plan original):
+  límites, validaciones, conteo de caracteres por code points, claves de orden sin tildes
+  (incluye Ø, ß, æ) y comparación por código (igual que Firestore). Los errores se lanzan como
+  `ServiceError` con `code`.
+- Implementación mock: base de datos en memoria persistida en localStorage, semilla
+  determinista (25 usuarios, 45 tweets, @ada con 2+ páginas en cada lista y seguidores sin
+  seguir de vuelta), servicios construidos por factory con dependencias inyectadas, y
+  `ServicesProvider` + `useServices`.
+- ESLint: se fijó `parserOptions.ecmaVersion: 'latest'`, porque Airbnb lo fija en 2018 y
+  bloqueaba `??` y `catch {}`. También se permitieron devDependencies en `*.test.jsx`.
+- Vitest se adelantó desde M1-09: 55 tests en verde. Un test falló en la primera corrida por una
+  suposición equivocada del propio test sobre la semilla; se reescribió para no depender de un
+  usuario concreto. También se corrigieron 3 defectos de la semilla detectados al revisar el
+  código antes de probarlo.
+- Docs: README (Architecture, cuentas demo), CLAUDE.md (reglas de arquitectura), M1-09 y M3-01
+  reescritas para el contrato por cursor.
+- Revisión independiente con un subagente (Claude Sonnet). Se corrigieron los hallazgos reales:
+  una cuenta de Google sin username podía publicar o seguir (`USERNAME_REQUIRED`); una cuenta de
+  Google podía iniciar sesión sin contraseña; la comparación usaba unidades UTF-16 en vez de code
+  points; el cursor por offset repetía elementos al insertar (ahora usa el id del último elemento,
+  como `startAfter`); `pageSize` no se validaba; los listeners de sesión se deduplicaban, no se
+  notificaban al hacer reset y podían interrumpir una escritura; el estado guardado no se validaba
+  (ahora tiene `schemaVersion`); el mock no exigía que quien escribe sea el usuario en sesión
+  (`PERMISSION_DENIED`). Se agregaron notas para Firebase en el contrato y se reforzaron los
+  tests: valores esperados literales o calculados desde la semilla, y 74 tests en total.
+- Verificación con mutaciones: se reintrodujo cada defecto corregido y siempre falló al menos un
+  test; al restaurar, los 74 tests pasan.
+- Limitación documentada (sin corregir): con dos pestañas abiertas, el mock se sobrescribe.
+
+### Archivos creados o modificados
+
+- `src/domain/*` (constants, errors, text, validation, sorting + domain.test.js)
+- `src/services/contracts.js`, `ServicesContext.js`, `ServicesProvider.jsx` (+ test),
+  `createAppServices.js`
+- `src/services/mock/*` (seed, mockDatabase, paginateArray, mappers, requireActor,
+  4 servicios, createMockServices + tests)
+- `src/utils/storage.js` (+ test), `src/main.jsx`, `eslint.config.js`, `package.json`,
+  `package-lock.json`
+- `README.md`, `CLAUDE.md`, `docs/milestone-1.md`, `docs/milestone-3.md`, `bitacora.md`

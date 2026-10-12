@@ -22,6 +22,11 @@ npm install
 npm run dev
 ```
 
+Until Milestone 2 connects Firebase, the app runs on **mock services** with demo data. Every
+demo account uses the password `telegraph`. Try `ada`, who has the most data. Changes are kept
+in the browser's `localStorage`; delete the `telegraph.mock.v1` key to restore the demo data. Use a single tab: the mock
+storage isn't synced between tabs.
+
 ## Scripts
 
 | Script                 | Description                       |
@@ -33,6 +38,37 @@ npm run dev
 | `npm run lint:fix`     | Lint and auto-fix what ESLint can |
 | `npm run format`       | Format every file with Prettier   |
 | `npm run format:check` | Check formatting without writing  |
+| `npm test`             | Run the test suite once (Vitest)  |
+| `npm run test:watch`   | Run tests in watch mode           |
+
+## Architecture
+
+```text
+src/
+├── domain/      Pure business rules: limits, validation, sort keys, ServiceError codes
+├── services/    Service contracts, the ServicesProvider and their implementations
+│   └── mock/    In-memory implementation with demo data (Milestone 1)
+├── utils/       Generic helpers (storage)
+├── hooks/       React hooks (data access goes through useServices)
+├── components/  Reusable UI components
+├── pages/       One component per route
+├── i18n/        Translations (es, en)
+└── styles/      Design tokens and global styles
+```
+
+`hooks/`, `components/`, `pages/`, `i18n/` and `styles/` are created by the tasks that fill them
+(M1-04 to M1-17).
+
+- The UI talks to four services (`authService`, `userService`, `tweetService`,
+  `followService`) through `useServices()`. Their contracts are documented in
+  `src/services/contracts.js`. Every method is async and every list is cursor-paginated:
+  `{ items, nextCursor, total }`.
+- `src/services/createAppServices.js` is the only place that picks an implementation. Milestone 2
+  replaces the mocks with Firebase there, and no component changes.
+- Business failures throw a `ServiceError` with a stable `code` (for example
+  `follow/already-following`), which the UI translates.
+- Validation and limits (280 characters counted in code points, username format, alphabetical sort
+  keys) live in `src/domain/`, so the mocks and Firebase enforce the same rules.
 
 ## Code style
 
@@ -68,5 +104,5 @@ enforced by ESLint, with Prettier owning formatting.
 - Commits follow [Conventional Commits](https://www.conventionalcommits.org/).
 - Every change reaches `develop` through a pull request (see the PR template).
 
-<!-- Sections to complete in later tasks: architecture (M1-03),
-     Firebase setup and data model (M2-01, M2-02), feed limitations (M2-12). -->
+<!-- Sections to complete in later tasks: Firebase setup and data model (M2-01, M2-02),
+     feed limitations (M2-12). -->

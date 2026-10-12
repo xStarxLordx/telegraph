@@ -56,7 +56,8 @@ path and record the choice in the README.
 ### M1-03 · Architecture and mock service layer
 
 **Description:** Define the folder structure (`pages/`, `components/`, `hooks/`, `services/`,
-`i18n/`, `styles/`, `utils/`) and the service contracts the UI depends on: `authService`,
+`i18n/`, `styles/`, `utils/`, plus `domain/` for pure business rules shared by every service
+implementation) and the service contracts the UI depends on: `authService`,
 `userService`, `tweetService`, `followService`. Implement them as **mock services** over in-memory
 seed data (≈25 users, ≈40 tweets, follow relations, so every list shows more than one page).
 Expose them through a `ServicesProvider` context so Milestone 2 swaps implementations without
@@ -128,16 +129,17 @@ Next), `CounterGauge` (followers / following), `Notice` / `Toast`, `EmptyState`,
 **Done when:** each component is used at least once and renders correctly in both themes and
 both languages.
 
-### M1-09 · Pagination utility and tests
+### M1-09 · Pagination hook and tests
 
-**Description:** Pure function that slices a list into pages of `PAGE_SIZE = 10` and returns
-`{ items, page, totalPages, hasNext, hasPrev }`, plus a `usePagination` hook that keeps the
-current page. Pure sort helpers: `sortByFullName` (locale-aware, accent-insensitive) and
-`sortByNewest`. Set up Vitest and cover the edge cases: empty list, exactly 10, 11, last page,
-out-of-range page.
+**Description:** Services return cursor pages (`{ items, nextCursor, total }`, see
+`src/services/contracts.js`). Build a reusable `usePaginatedList(fetchPage)` hook that keeps a
+stack of cursors and exposes `{ items, page, totalPages, hasNext, hasPrev, next, prev, loading,
+error, reload }` with `PAGE_SIZE = 10`, so every list page and the `Pagination` component share
+it. Test it (Vitest was set up in M1-03): empty list, exactly 10, 11, going forward and back,
+reload after a mutation, and a failing fetch.
 **Covers:** R1.5, R1.6, R1.7, R1.8, G-09.
-**Depends on:** M1-01.
-**Blocks:** M1-14 … M1-17. **Related:** M3-01 (server-side pagination replaces slicing).
+**Depends on:** M1-03.
+**Blocks:** M1-14 … M1-17. **Related:** M3-01 (Firestore cursors behind the same contract).
 **Done when:** `npm test` passes and the edge cases above are covered.
 
 ### M1-10 · Registration page
@@ -272,26 +274,26 @@ bitácora is committed.
 
 Mark a task with `X` when it is done and write the date (`YYYY-MM-DD`). Notes are optional.
 
-| Done | ID    | Task                                | Date       | Notes                                                                                            |
-| :--: | ----- | ----------------------------------- | ---------- | ------------------------------------------------------------------------------------------------ |
-| [X]  | M1-01 | Repository and project scaffold     | 2026-10-12 | Vite 8 + React 19 + react-router 8. Template ships oxlint; replace with ESLint + Airbnb in M1-02 |
-| [X]  | M1-02 | Linting and code style (Airbnb)     | 2026-10-12 | ESLint 9 + eslint-config-airbnb-extended 3.3 + Prettier 3; Vite demo replaced by a placeholder   |
-| [ ]  | M1-03 | Architecture and mock service layer |            |                                                                                                  |
-| [ ]  | M1-04 | Design tokens and theming           |            |                                                                                                  |
-| [ ]  | M1-05 | Internationalization (es / en)      |            |                                                                                                  |
-| [ ]  | M1-06 | Routing, layouts and route guards   |            |                                                                                                  |
-| [ ]  | M1-07 | Common header                       |            |                                                                                                  |
-| [ ]  | M1-08 | Shared UI components                |            |                                                                                                  |
-| [ ]  | M1-09 | Pagination utility and tests        |            |                                                                                                  |
-| [ ]  | M1-10 | Registration page                   |            |                                                                                                  |
-| [ ]  | M1-11 | Login page                          |            |                                                                                                  |
-| [ ]  | M1-12 | Home page                           |            |                                                                                                  |
-| [ ]  | M1-13 | Compose tweet page                  |            |                                                                                                  |
-| [ ]  | M1-14 | Following list page                 |            |                                                                                                  |
-| [ ]  | M1-15 | Followers list page                 |            |                                                                                                  |
-| [ ]  | M1-16 | User tweets page                    |            |                                                                                                  |
-| [ ]  | M1-17 | Feed page                           |            |                                                                                                  |
-| [ ]  | M1-18 | Responsive and accessibility pass   |            |                                                                                                  |
-| [ ]  | M1-19 | README and project documentation    |            |                                                                                                  |
-| [ ]  | M1-20 | AI log (`bitacora.md`)              |            | Ongoing; started 2026-10-12                                                                      |
-| [ ]  | M1-21 | First delivery release              |            |                                                                                                  |
+| Done | ID    | Task                                | Date       | Notes                                                                                                                                         |
+| :--: | ----- | ----------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| [X]  | M1-01 | Repository and project scaffold     | 2026-10-12 | Vite 8 + React 19 + react-router 8. Template ships oxlint; replace with ESLint + Airbnb in M1-02                                              |
+| [X]  | M1-02 | Linting and code style (Airbnb)     | 2026-10-12 | ESLint 9 + eslint-config-airbnb-extended 3.3 + Prettier 3; Vite demo replaced by a placeholder                                                |
+| [X]  | M1-03 | Architecture and mock service layer | 2026-10-12 | Cursor-paginated contracts, `src/domain/` rules, mocks persisted in localStorage, Vitest moved here (74 tests); reviewed by a Sonnet subagent |
+| [ ]  | M1-04 | Design tokens and theming           |            |                                                                                                                                               |
+| [ ]  | M1-05 | Internationalization (es / en)      |            |                                                                                                                                               |
+| [ ]  | M1-06 | Routing, layouts and route guards   |            |                                                                                                                                               |
+| [ ]  | M1-07 | Common header                       |            |                                                                                                                                               |
+| [ ]  | M1-08 | Shared UI components                |            |                                                                                                                                               |
+| [ ]  | M1-09 | Pagination hook and tests           |            |                                                                                                                                               |
+| [ ]  | M1-10 | Registration page                   |            |                                                                                                                                               |
+| [ ]  | M1-11 | Login page                          |            |                                                                                                                                               |
+| [ ]  | M1-12 | Home page                           |            |                                                                                                                                               |
+| [ ]  | M1-13 | Compose tweet page                  |            |                                                                                                                                               |
+| [ ]  | M1-14 | Following list page                 |            |                                                                                                                                               |
+| [ ]  | M1-15 | Followers list page                 |            |                                                                                                                                               |
+| [ ]  | M1-16 | User tweets page                    |            |                                                                                                                                               |
+| [ ]  | M1-17 | Feed page                           |            |                                                                                                                                               |
+| [ ]  | M1-18 | Responsive and accessibility pass   |            |                                                                                                                                               |
+| [ ]  | M1-19 | README and project documentation    |            |                                                                                                                                               |
+| [ ]  | M1-20 | AI log (`bitacora.md`)              |            | Ongoing; started 2026-10-12                                                                                                                   |
+| [ ]  | M1-21 | First delivery release              |            |                                                                                                                                               |

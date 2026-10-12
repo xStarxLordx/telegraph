@@ -28,18 +28,17 @@ items per page (G-09).
 
 ## Tasks
 
-### M3-01 · Server-side paginated query hook
+### M3-01 · Firestore cursor pagination
 
-**Description:** Firestore has no offset in the web SDK, so build a reusable
-`usePaginatedQuery(baseQuery, { pageSize: 10 })` hook using cursors: `limit(pageSize)` plus
-`startAfter(lastDoc)`, keeping a stack of cursors so "Previous" works. It gets the total with
-`getCountFromServer` to show "Page X of Y". It returns
-`{ items, page, totalPages, next, prev, loading, error }` with the same shape as the M1
-`usePagination` hook, so the `Pagination` component doesn't change.
+**Description:** Firestore has no offset in the web SDK. Implement the services' `PageRequest` →
+`Page` contract (`src/services/contracts.js`) with `limit(pageSize)` + `startAfter(cursor)`,
+encoding the last document as the opaque `nextCursor`, and `getCountFromServer` for `total`
+("Page X of Y"). Write it once as a shared helper used by every Firebase list method. The UI
+hook `usePaginatedList` (M1-09) and the `Pagination` component stay unchanged.
 **Covers:** R3.1, R3.2, R3.6, G-09.
 **Depends on:** M2-03, M1-09.
-**Blocks:** M3-02, M3-03, M3-06. **Related:** M2-11 (the user tweets list moves to this hook); M2-12 (the feed keeps its own
-multi-cursor paging but must return the same shape).
+**Blocks:** M3-02, M3-03, M3-06. **Related:** M2-11 (user tweets list uses the helper); M2-12 (the
+feed keeps its own multi-cursor paging but returns the same `Page` shape).
 **Done when:** going forward and back through 3+ pages shows the right items with no duplicates
 or gaps.
 
@@ -132,7 +131,7 @@ Mark a task with `X` when it is done and write the date (`YYYY-MM-DD`). Notes ar
 
 | Done | ID    | Task                                          | Date | Notes |
 | :--: | ----- | --------------------------------------------- | ---- | ----- |
-| [ ]  | M3-01 | Server-side paginated query hook              |      |       |
+| [ ]  | M3-01 | Firestore cursor pagination                   |      |       |
 | [ ]  | M3-02 | Following list with real data                 |      |       |
 | [ ]  | M3-03 | Followers list with real data and follow-back |      |       |
 | [ ]  | M3-04 | Counters on the user tweets page              |      |       |

@@ -24,10 +24,30 @@ export default [
   reactJsxRuntime,
   reactRefresh.configs.vite,
   {
+    // Airbnb pins parserOptions.ecmaVersion to 2018 (which wins over languageOptions.ecmaVersion);
+    // Vite compiles modern syntax such as `??` and `catch {}`.
+    name: 'telegraph/modern-syntax',
+    languageOptions: {
+      parserOptions: { ecmaVersion: 'latest' },
+    },
+  },
+  {
     name: 'telegraph/browser-globals',
     files: ['src/**/*.{js,jsx}'],
     languageOptions: {
       globals: globals.browser,
+    },
+  },
+  {
+    // Airbnb's dev-dependency globs cover *.test.js but not *.test.jsx (component tests).
+    name: 'telegraph/tests',
+    files: ['**/*.test.{js,jsx}'],
+    // Vitest runs in Node.
+    languageOptions: {
+      globals: globals.node,
+    },
+    rules: {
+      'import-x/no-extraneous-dependencies': ['error', { devDependencies: true }],
     },
   },
   prettierConfig,
