@@ -1,0 +1,56 @@
+.gauge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.link:hover {
+  color: var(--color-text);
+}
+
+.link:hover .face {
+  stroke: var(--color-primary-hover);
+}
+
+.face {
+  fill: var(--color-surface-sunken);
+  stroke: var(--color-primary);
+  stroke-width: 3;
+}
+
+.ticks {
+  fill: none;
+  stroke: var(--color-gauge-ticks);
+  stroke-width: 6;
+  stroke-dasharray: 1.5 6;
+}
+
+.needle {
+  stroke: var(--color-accent);
+  stroke-width: 3;
+  stroke-linecap: round;
+  transform-box: view-box;
+  transform-origin: 42px 42px;
+  transition: transform 0.6s ease;
+}
+
+.hub {
+  fill: var(--color-primary);
+}
+
+.count {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.label {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}

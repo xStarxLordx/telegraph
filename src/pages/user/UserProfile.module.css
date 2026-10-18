@@ -1,0 +1,44 @@
+.profile {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
+}
+
+.identity {
+  display: flex;
+  flex: 1 1 220px;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.name {
+  margin: 0;
+  font-size: 1.75rem;
+  overflow-wrap: anywhere;
+}
+
+.username {
+  margin: 0;
+  font-family: var(--font-mono);
+  color: var(--color-accent);
+}
+
+.badge {
+  margin: 4px 0 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.gauges {
+  display: flex;
+  gap: 8px;
+}
+
+.actions {
+  display: flex;
+  flex-basis: 100%;
+  justify-content: flex-end;
+}

@@ -68,6 +68,10 @@ graded. Commit it with the session's work, never in one final batch commit.
   `data-theme` on `<html>`, dark by default.
 - **One app, two palettes:** a theme changes only color-token values. Never branch markup, icons,
   fonts or shapes on the theme (the sun/moon toggle icon is the only exception).
+- Follows go through `useSocial().follow` (or `useFollowUser`), never straight to
+  `followService.follow`: it bumps the version that makes counters and Follow buttons reload.
+- Redirects after login, register and logout belong to the route guards (`src/routes/guards.jsx`):
+  auth pages only call the service and let `PublicOnly` / `RequireAuth` react to the session.
 
 ## Traps (non-obvious)
 
@@ -91,8 +95,14 @@ graded. Commit it with the session's work, never in one final batch commit.
   ESLint 10 yet. The official `eslint-config-airbnb` is stuck on ESLint 8. Never run
   `npm audit fix --force`: it downgrades the Airbnb config. The `braces` advisories are dev-only
   (see README › Code style).
-- Airbnb enforces `react/prop-types` in plain JS: components declare `propTypes` (add the
-  `prop-types` package with the first component that takes props).
+- Airbnb enforces `react/prop-types` in plain JS: components declare `propTypes`. React 19 ignores
+  `defaultProps` on function components, so optional props default in the destructuring
+  (`react/require-default-props` is set to `defaultArguments`).
+- **`react-hooks/set-state-in-effect`** rejects `setState` called synchronously inside an effect
+  (e.g. `setLoading(true)` before a fetch). Derive "loading" from which request settled last,
+  as `useAsyncData` and `usePaginatedList` do, and only set state in the async callbacks.
+- Vitest runs in Node by default: a test that renders to the DOM starts with
+  `// @vitest-environment jsdom`. `src/test/renderApp.jsx` mounts the whole app on fresh mocks.
 
 ## Repository etiquette
 

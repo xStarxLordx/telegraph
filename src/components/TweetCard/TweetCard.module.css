@@ -1,0 +1,66 @@
+/* Dashed top and bottom rules: a nod to the "------" lines of the required format (G-06). */
+.tweet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 24px;
+  border-block: 1px dashed var(--color-border);
+  background: var(--color-surface);
+}
+
+.rivet {
+  position: absolute;
+  top: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-border);
+}
+
+.left {
+  left: 8px;
+}
+
+.right {
+  right: 8px;
+}
+
+.meta {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.name {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--color-text);
+}
+
+.username {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.username:hover {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+.body {
+  margin: 0;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 480px) {
+  .tweet {
+    padding: 16px 18px;
+  }
+}

@@ -1,0 +1,51 @@
+.compose {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
+}
+
+.prompt {
+  flex: 1 1 240px;
+  margin: 0;
+  font-size: 1.125rem;
+  line-height: 1.5;
+}
+
+.shortcuts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.shortcut {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 18px 20px;
+  border-block: 1px dashed var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.shortcut:hover {
+  color: var(--color-primary-hover);
+}
+
+.shortcutText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.shortcutText strong {
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+}
+
+.shortcutText span {
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+}
