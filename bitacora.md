@@ -205,3 +205,46 @@ No se editan ni se borran entradas anteriores.
 - `src/utils/storage.js` (+ test), `src/main.jsx`, `eslint.config.js`, `package.json`,
   `package-lock.json`
 - `README.md`, `CLAUDE.md`, `docs/milestone-1.md`, `docs/milestone-3.md`, `bitacora.md`
+
+---
+
+## 2026-10-18 10:29 (UTC-5) — M1-04: tokens de diseño y temas
+
+- **Herramienta:** Claude Code (CLI)
+- **Modelo:** Claude Opus 5.5 (`claude-opus-5-5`)
+
+### Mensajes del estudiante (textuales)
+
+1. > adelanté algunas tareas en el app durante la semana, ahora necesito que continúes con las tareas del plan que siguén, dejé marcado lo completado en los md puedes revisar qué sigue para continuar
+2. Respuestas a las preguntas de la sesión:
+   > Alcance: "Todo lo que se pueda de M1"
+
+### Resumen de la respuesta
+
+- Revisión del estado: en `develop` solo M1-01…M1-03 estaban integrados (PR #1 y #2); lint y los
+  74 tests en verde. Se actualizó `develop` local y se creó `feature/M1-04-theming`.
+- `src/styles/tokens.css`: las dos paletas de `design-system.md` como custom properties bajo
+  `data-theme` (oscuro por defecto, también sin atributo), más fuentes, radios y tamaño táctil
+  compartidos. Es el único archivo con valores de color.
+- `src/styles/global.css` (antes `src/index.css`): fondo, texto, tipografías, enlaces y anillo de
+  foco desde los tokens. Google Fonts (Cinzel, Lora, Special Elite) en `index.html`.
+- `src/theme/`: `themePreference.js` (funciones puras: leer, guardar, alternar y aplicar),
+  `ThemeContext.js` (`useTheme`) y `ThemeProvider.jsx`, con el mismo patrón que `ServicesProvider`.
+  La preferencia se guarda en `localStorage` (`telegraph.theme`).
+- Script inline en `index.html` que aplica el tema guardado antes de montar React (sin parpadeo).
+  Un test comprueba que usa la misma clave que `themePreference.js`.
+- `ThemeToggle` (sol en oscuro, luna en claro) con íconos SVG de trazo; su `aria-label` queda en
+  inglés hasta M1-05 (i18n). Favicon de Vite reemplazado por el engranaje de Telegraph.
+- Verificación: 82 tests, lint, `format:check` y build en verde; `grep` sin colores hex fuera de
+  `tokens.css`. La extensión de Chrome no estaba conectada, así que se verificó con Chrome
+  headless por CDP (script en el scratchpad): el toggle cambia fondo, texto y títulos; la
+  elección sobrevive a la recarga; sin errores en consola. Se corrigió un scroll vertical
+  sobrante (`min-height: 100vh` en `body`).
+
+### Archivos creados o modificados
+
+- `src/styles/tokens.css`, `src/theme/*` (+ `theme.test.jsx`), `src/components/icons/icons.jsx`,
+  `src/components/ThemeToggle/*` (creados)
+- `src/styles/global.css` (movido desde `src/index.css`), `src/main.jsx`, `src/App.jsx`,
+  `index.html`, `public/favicon.svg` (modificados)
+- `README.md` (Architecture), `docs/milestone-1.md` (seguimiento M1-04), `bitacora.md`
