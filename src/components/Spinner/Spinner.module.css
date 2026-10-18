@@ -1,0 +1,30 @@
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 16px;
+  color: var(--color-primary);
+}
+
+.gear,
+.inline {
+  display: inline-flex;
+  animation: spin 2.4s linear infinite;
+}
+
+.inline {
+  animation-duration: 1.6s;
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}

@@ -206,19 +206,19 @@ limitation), check that every new string exists in `es` and `en`, run lint and t
 
 Mark a task with `X` when it is done and write the date (`YYYY-MM-DD`). Notes are optional.
 
-| Done | ID    | Task                                              | Date | Notes |
-| :--: | ----- | ------------------------------------------------- | ---- | ----- |
-| [ ]  | M2-01 | Firebase project and SDK setup                    |      |       |
-| [ ]  | M2-02 | Firestore data model, indexes and security rules  |      |       |
-| [ ]  | M2-03 | Firebase implementations of the service contracts |      |       |
-| [ ]  | M2-04 | User registration logic                           |      |       |
-| [ ]  | M2-05 | Login with username and password                  |      |       |
-| [ ]  | M2-06 | Google sign-in and username onboarding            |      |       |
-| [ ]  | M2-07 | Real auth session and route guards                |      |       |
-| [ ]  | M2-08 | Publish tweet logic                               |      |       |
-| [ ]  | M2-09 | Followers and following counters on home          |      |       |
-| [ ]  | M2-10 | Follow a user by username                         |      |       |
-| [ ]  | M2-11 | View tweets of followers and following            |      |       |
-| [ ]  | M2-12 | Real feed data                                    |      |       |
-| [ ]  | M2-13 | Tests for validation and services                 |      |       |
-| [ ]  | M2-14 | Milestone 2 wrap-up                               |      |       |
+| Done | ID    | Task                                              | Date | Notes                                                                            |
+| :--: | ----- | ------------------------------------------------- | ---- | -------------------------------------------------------------------------------- |
+| [ ]  | M2-01 | Firebase project and SDK setup                    |      |                                                                                  |
+| [ ]  | M2-02 | Firestore data model, indexes and security rules  |      |                                                                                  |
+| [ ]  | M2-03 | Firebase implementations of the service contracts |      |                                                                                  |
+| [ ]  | M2-04 | User registration logic                           |      |                                                                                  |
+| [ ]  | M2-05 | Login with username and password                  |      |                                                                                  |
+| [ ]  | M2-06 | Google sign-in and username onboarding            |      | `/choose-username` page and guard already built in M1 on the mock; wire Firebase |
+| [ ]  | M2-07 | Real auth session and route guards                |      |                                                                                  |
+| [ ]  | M2-08 | Publish tweet logic                               |      |                                                                                  |
+| [ ]  | M2-09 | Followers and following counters on home          |      |                                                                                  |
+| [ ]  | M2-10 | Follow a user by username                         |      |                                                                                  |
+| [ ]  | M2-11 | View tweets of followers and following            |      |                                                                                  |
+| [ ]  | M2-12 | Real feed data                                    |      |                                                                                  |
+| [ ]  | M2-13 | Tests for validation and services                 |      |                                                                                  |
+| [ ]  | M2-14 | Milestone 2 wrap-up                               |      |                                                                                  |

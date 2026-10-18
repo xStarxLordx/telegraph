@@ -1,0 +1,163 @@
+{
+  "app": {
+    "name": "Telegraph",
+    "title": "Telegraph"
+  },
+  "common": {
+    "loading": "Loading…",
+    "retry": "Try again",
+    "dismiss": "Dismiss notification"
+  },
+  "theme": {
+    "switchToLight": "Switch to light mode",
+    "switchToDark": "Switch to dark mode"
+  },
+  "language": {
+    "label": "Language",
+    "es": "Español",
+    "en": "English"
+  },
+  "header": {
+    "home": "Go to home",
+    "account": "Account",
+    "profile": "My tweets, @{{username}}",
+    "logout": "Log out"
+  },
+  "nav": {
+    "label": "Main",
+    "skipToContent": "Skip to content",
+    "home": "Home",
+    "feed": "Feed",
+    "myTweets": "My tweets",
+    "following": "Following",
+    "followers": "Followers",
+    "tweet": "Tweet"
+  },
+  "fields": {
+    "fullName": "Full name",
+    "username": "Username",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm password"
+  },
+  "login": {
+    "title": "Log in",
+    "subtitle": "Log in to send your dispatches.",
+    "usernamePlaceholder": "ada",
+    "submit": "Log in",
+    "or": "or",
+    "google": "Continue with Google",
+    "noAccount": "Don't have an account?",
+    "registerLink": "Sign up"
+  },
+  "register": {
+    "title": "Create account",
+    "subtitle": "Join the network of short dispatches.",
+    "usernameHint": "{{usernameMin}} to {{usernameMax}} characters: letters, numbers and _.",
+    "passwordHint": "At least {{passwordMin}} characters.",
+    "submit": "Create account",
+    "haveAccount": "Already have an account?",
+    "loginLink": "Log in"
+  },
+  "chooseUsername": {
+    "title": "Choose your username",
+    "subtitle": "This is your first Google sign-in. Choose how others will see you.",
+    "submit": "Continue"
+  },
+  "home": {
+    "title": "Hello, {{name}}",
+    "subtitle": "Your personal telegraph station.",
+    "composePrompt": "What do you want to tell the world today?",
+    "tweet": "Tweet",
+    "feedHint": "Your tweets and those of the people you follow.",
+    "myTweetsHint": "Everything you have published."
+  },
+  "compose": {
+    "title": "New tweet",
+    "subtitle": "Up to {{max}} characters per dispatch.",
+    "label": "Your tweet",
+    "placeholder": "Write your dispatch…",
+    "counter": "{{count}} / {{max}}",
+    "overLimit": "too long",
+    "submit": "Publish",
+    "published": "Tweet published.",
+    "nearLimitAnnouncement": "Few characters left.",
+    "overLimitAnnouncement": "The tweet is over the character limit."
+  },
+  "feed": {
+    "title": "Feed",
+    "subtitle": "Your tweets and those of the people you follow, newest first.",
+    "emptyTitle": "Your feed is empty",
+    "emptyMessage": "Publish your first tweet or follow someone to see their dispatches here.",
+    "emptyAction": "See my followers"
+  },
+  "following": {
+    "title": "Following",
+    "subtitle_one": "You follow {{count}} person, in alphabetical order.",
+    "subtitle_other": "You follow {{count}} people, in alphabetical order.",
+    "emptyTitle": "You don't follow anyone yet",
+    "emptyMessage": "Start by following your followers back."
+  },
+  "followers": {
+    "title": "Followers",
+    "subtitle_one": "{{count}} person follows you, in alphabetical order.",
+    "subtitle_other": "{{count}} people follow you, in alphabetical order.",
+    "emptyTitle": "No followers yet",
+    "emptyMessage": "Publish your first dispatches so people can find you."
+  },
+  "follow": {
+    "follow": "Follow",
+    "followUser": "Follow @{{username}}",
+    "followed": "You now follow @{{username}}."
+  },
+  "counters": {
+    "title": "Social gauge",
+    "followers": "Followers",
+    "following": "Following"
+  },
+  "user": {
+    "thisIsYou": "This is your profile.",
+    "tweetsTitle": "Tweets by {{name}}",
+    "tweetsHeading_one": "{{count}} tweet",
+    "tweetsHeading_other": "{{count}} tweets",
+    "noTweets": "@{{username}} hasn't published anything yet",
+    "notFoundTitle": "User not found",
+    "notFoundMessage": "There is no account with the username @{{username}}.",
+    "tweets": "Tweets"
+  },
+  "pagination": {
+    "label": "Pagination",
+    "previous": "Previous",
+    "next": "Next",
+    "status": "Page {{page}} of {{totalPages}}",
+    "first": "Go to the first page"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "message": "This dispatch got lost on the way: the address doesn't exist.",
+    "backHome": "Back to home"
+  },
+  "errors": {
+    "auth/invalid-credentials": "Wrong username or password.",
+    "auth/not-authenticated": "Your session ended. Please log in again.",
+    "auth/permission-denied": "You don't have permission to do this.",
+    "user/username-taken": "That username is already taken.",
+    "user/email-taken": "An account with that email already exists.",
+    "user/not-found": "That user doesn't exist.",
+    "user/username-already-set": "Your account already has a username.",
+    "user/username-required": "Choose a username before continuing.",
+    "follow/self": "You can't follow yourself.",
+    "follow/already-following": "You already follow this user.",
+    "pagination/invalid-cursor": "This page couldn't be loaded. Go back to the first one.",
+    "pagination/invalid-page-size": "Invalid page size.",
+    "unknown": "Something went wrong. Please try again.",
+    "validation/required": "This field is required.",
+    "validation/full-name-too-long": "The name can be at most {{fullNameMax}} characters long.",
+    "validation/username-invalid": "Use {{usernameMin}} to {{usernameMax}} characters: letters, numbers and _.",
+    "validation/email-invalid": "Enter a valid email, like name@domain.com.",
+    "validation/password-too-short": "The password must be at least {{passwordMin}} characters long.",
+    "validation/tweet-empty": "The tweet can't be empty.",
+    "validation/tweet-too-long": "The tweet can be at most {{tweetMax}} characters long.",
+    "validation/passwords-mismatch": "The passwords don't match."
+  }
+}

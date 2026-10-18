@@ -1,12 +1,14 @@
-import ThemeToggle from './components/ThemeToggle/ThemeToggle';
+import { BrowserRouter } from 'react-router';
+import AppProviders from './AppProviders';
+import AppRoutes from './routes/AppRoutes';
 
-// Placeholder root component: routing and layouts arrive in M1-06.
 function App() {
   return (
-    <main>
-      <h1>Telegraph</h1>
-      <ThemeToggle />
-    </main>
+    <BrowserRouter>
+      <AppProviders>
+        <AppRoutes />
+      </AppProviders>
+    </BrowserRouter>
   );
 }
 

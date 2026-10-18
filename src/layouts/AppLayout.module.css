@@ -1,0 +1,73 @@
+.shell {
+  position: relative;
+  min-height: 100vh;
+  isolation: isolate;
+}
+
+/* Three columns (nav · main · aside) in a 1200 px container; they wrap on narrow screens. */
+.columns {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 32px;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: 32px 24px 48px;
+}
+
+.nav {
+  flex: 1 1 200px;
+  max-width: 240px;
+}
+
+.main {
+  display: flex;
+  flex: 999 1 480px;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.main:focus {
+  outline: none;
+}
+
+.aside {
+  flex: 1 1 260px;
+  max-width: 320px;
+}
+
+.skipLink {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 20;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  transform: translateY(-200%);
+}
+
+.skipLink:focus {
+  color: var(--color-on-primary);
+  transform: none;
+}
+
+@media (max-width: 760px) {
+  .columns {
+    gap: 20px;
+    padding: 20px 16px 40px;
+  }
+
+  .nav,
+  .aside {
+    flex-basis: 100%;
+    max-width: none;
+  }
+
+  /* Page content first, then the counters. */
+  .main {
+    flex-basis: 100%;
+  }
+}

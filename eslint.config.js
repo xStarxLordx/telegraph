@@ -32,6 +32,17 @@ export default [
     },
   },
   {
+    // React 19 ignores `defaultProps` on function components, so optional props get their
+    // defaults from destructuring instead (Airbnb asks for `defaultProps`).
+    name: 'telegraph/react-19',
+    rules: {
+      'react/require-default-props': [
+        'error',
+        { forbidDefaultForRequired: true, functions: 'defaultArguments' },
+      ],
+    },
+  },
+  {
     name: 'telegraph/browser-globals',
     files: ['src/**/*.{js,jsx}'],
     languageOptions: {
@@ -39,9 +50,10 @@ export default [
     },
   },
   {
-    // Airbnb's dev-dependency globs cover *.test.js but not *.test.jsx (component tests).
+    // Airbnb's dev-dependency globs cover *.test.js but not *.test.jsx (component tests) or
+    // the shared test helpers in src/test/.
     name: 'telegraph/tests',
-    files: ['**/*.test.{js,jsx}'],
+    files: ['**/*.test.{js,jsx}', 'src/test/**/*.{js,jsx}'],
     // Vitest runs in Node.
     languageOptions: {
       globals: globals.node,

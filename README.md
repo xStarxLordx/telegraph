@@ -5,12 +5,34 @@ single-page application backed by Firebase. Users register, log in, publish shor
 ("tweets", up to 280 characters), follow other users and read a feed of the people they follow.
 
 The UI has two themes: **Brass & Soot**, a dark steampunk retro theme (the default), and
-**Ivory Wash**, a light watercolor theme. It is available in Spanish and English.
+**Ivory Wash**, a light watercolor theme. It is available in Spanish (the default) and English.
+
+## Features
+
+Milestone 1 delivers every page of the app on mock data:
+
+| Route              | Page                                                                         |
+| ------------------ | ---------------------------------------------------------------------------- |
+| `/login`           | Log in with username and password, or with Google                            |
+| `/register`        | Create an account (full name, username, email, password)                     |
+| `/choose-username` | First Google login: pick a username before entering the app                  |
+| `/`                | Home: welcome and the "Tweet" link; followers / following gauges on the side |
+| `/compose`         | Write a tweet with a live `n / 280` counter and publish it                   |
+| `/feed`            | My tweets and those of the people I follow, newest first                     |
+| `/following`       | People I follow, alphabetical by full name                                   |
+| `/followers`       | My followers, alphabetical, with "Follow" for those I don't follow back      |
+| `/users/:username` | A user's tweets, counters and a "Follow" button                              |
+
+Every list shows 10 items per page. Private pages share a header with the logo, the logged-in
+`@username`, logout, the theme toggle and the language switcher. Unknown URLs show a 404 page.
 
 ## Tech stack
 
 - [React](https://react.dev/) + [Vite](https://vite.dev/) (JavaScript)
-- [React Router](https://reactrouter.com/)
+- [React Router](https://reactrouter.com/) (declarative mode: `BrowserRouter` + `Routes`)
+- [i18next](https://www.i18next.com/) + `react-i18next` for Spanish / English
+- CSS Modules over the design tokens in `src/styles/tokens.css`
+- [Vitest](https://vitest.dev/) + [Testing Library](https://testing-library.com/) (jsdom) for tests
 - [Firebase](https://firebase.google.com/): Authentication and Cloud Firestore (from Milestone 2)
 
 ## Getting started
@@ -22,10 +44,15 @@ npm install
 npm run dev
 ```
 
-Until Milestone 2 connects Firebase, the app runs on **mock services** with demo data. Every
-demo account uses the password `telegraph`. Try `ada`, who has the most data. Changes are kept
-in the browser's `localStorage`; delete the `telegraph.mock.v1` key to restore the demo data. Use a single tab: the mock
-storage isn't synced between tabs.
+Open <http://localhost:5173>. Until Milestone 2 connects Firebase, the app runs on **mock
+services** with demo data:
+
+- Every demo account uses the password `telegraph`. Try `ada`, who has the most data (every list
+  has two or more pages).
+- "Continue with Google" logs in a demo Google account, which first has to choose a username.
+- Changes are kept in the browser's `localStorage`; delete the `telegraph.mock.v1` key to restore
+  the demo data. Use a single tab: the mock storage isn't synced between tabs.
+- The mocks add 300 ms of latency on purpose, so loading states are visible.
 
 ## Scripts
 
@@ -48,16 +75,22 @@ src/
 ├── domain/      Pure business rules: limits, validation, sort keys, ServiceError codes
 ├── services/    Service contracts, the ServicesProvider and their implementations
 │   └── mock/    In-memory implementation with demo data (Milestone 1)
-├── utils/       Generic helpers (storage)
+├── auth/        AuthProvider + useAuth: the session, mirrored from authService
+├── social/      SocialProvider + useSocial: follow actions shared by every screen
 ├── theme/       ThemeProvider, useTheme and the saved theme preference
-├── hooks/       React hooks (data access goes through useServices)
-├── components/  Reusable UI components
+├── i18n/        i18next setup, es/en translations and error-code messages
+├── hooks/       Data and form hooks (usePaginatedList, useForm, useFollowCounts…)
+├── components/  Reusable UI components, one folder each with its CSS Module
+├── layouts/     AuthLayout (public pages) and AppLayout (header · nav · page · gauges)
+├── routes/      Route table, paths and guards (RequireAuth, PublicOnly)
 ├── pages/       One component per route
-├── i18n/        Translations (es, en)
-└── styles/      Design tokens (tokens.css) and global styles
+├── styles/      Design tokens (tokens.css) and global styles
+├── utils/       Generic helpers (storage, date formatting)
+└── test/        Test helpers (renderApp: the whole app on mocks at a given URL)
 ```
 
-`hooks/`, `pages/` and `i18n/` are created by the tasks that fill them (M1-05 to M1-17).
+Data flows one way: **pages → hooks → services**. Pages and components never import Firebase or
+the mock data, and business logic stays out of JSX.
 
 - The UI talks to four services (`authService`, `userService`, `tweetService`,
   `followService`) through `useServices()`. Their contracts are documented in
@@ -74,6 +107,23 @@ src/
   on `<html>` selects the palette, dark by default. An inline script in `index.html` applies the
   saved theme (`localStorage` key `telegraph.theme`) before React mounts, so the page never
   flashes the wrong theme. Components style themselves with CSS Modules.
+- Lists use `usePaginatedList(fetchPage)`, which keeps a stack of cursors for Previous / Next and
+  feeds `PagedList` (spinner, error with retry, empty state, "Page X of Y").
+- After a follow, `SocialProvider` bumps a version that makes counters and Follow buttons reload,
+  so every part of the screen agrees without a page reload.
+- Every visible string goes through i18next (`src/i18n/locales/es.json` and `en.json`, same
+  keys; a test checks it). Error codes map to `errors.<code>` messages. The language choice is
+  saved in `localStorage` (`telegraph.language`) and kept in sync with `<html lang>`.
+- Accessibility: labelled inputs with linked error messages, a skip link, visible focus rings,
+  touch targets of at least 44 px and keyboard-only flows; no horizontal scroll at 360 px. Text
+  colors keep a contrast of at least 4.5:1 in both themes.
+
+## Testing
+
+`npm test` runs unit tests (domain rules, mock services, `usePaginatedList`, translations,
+`TweetCard`) and integration tests that render the whole app on mock services with Testing
+Library: route guards, login and logout, Google onboarding, publishing, following and the
+paginated lists. Tests that need a DOM declare `// @vitest-environment jsdom` at the top.
 
 ## Code style
 
@@ -87,6 +137,8 @@ enforced by ESLint, with Prettier owning formatting.
   `airbnb-extended` doesn't support ESLint 10 yet. Upgrade ESLint once it does.
 - The React 17+ JSX runtime preset disables `react/react-in-jsx-scope`. `eslint-plugin-react-refresh`
   guards Vite's hot reload.
+- `react/require-default-props` is set to `defaultArguments`: React 19 ignores `defaultProps` on
+  function components, so optional props get their defaults when destructuring.
 - **Prettier 3** (`.prettierrc.json`: single quotes, semicolons, trailing commas, 100 columns,
   LF) runs last through `eslint-config-prettier`, so the two tools never disagree.
 - `npm audit` reports high-severity advisories in `braces`, pulled in through

@@ -248,3 +248,89 @@ No se editan ni se borran entradas anteriores.
 - `src/styles/global.css` (movido desde `src/index.css`), `src/main.jsx`, `src/App.jsx`,
   `index.html`, `public/favicon.svg` (modificados)
 - `README.md` (Architecture), `docs/milestone-1.md` (seguimiento M1-04), `bitacora.md`
+
+---
+
+## 2026-10-18 11:29 (UTC-5) — M1-05 a M1-19: SPA completa sobre datos mock
+
+- **Herramienta:** Claude Code (CLI)
+- **Modelo:** Claude Opus 5.5 (`claude-opus-5-5`); revisión independiente con un subagente
+  Claude Sonnet
+
+### Mensajes del estudiante (textuales)
+
+1. > Ok hice todas las pruebas, modifiqué algunas cosas de diseño y probé la funcionalidad de dark y light mode, puedes hacer el commit con el push y el PR para hacer merge
+2. Respuesta a la pregunta sobre los cambios de diseño (no aparecían en los archivos):
+   > "Commit sin ellos"
+3. > Listo ya está listo el merge puedes continuar con todas las tareas restantes de M1
+4. Respuesta a la pregunta sobre commits:
+   > Hagamos un solo commit al finalizar todas las tareas de M1, el push y el PR se harían cuando yo revise y pruebe todo lo que se hizo en M1 y de el visto bueno
+
+### Resumen de la respuesta
+
+- M1-04: commits, push y PR #3; el estudiante hizo el merge. Se trabajó M1-05…M1-19 en una sola
+  rama (`feature/M1-05-to-M1-19-spa`), sin commit hasta la revisión del estudiante.
+- Dependencias nuevas con versiones publicadas hace más de dos semanas: i18next 26.4.2,
+  react-i18next 17.0.15, i18next-browser-languagedetector 8.2.1; de desarrollo jsdom 30.1.1 y
+  Testing Library (react 16.3.3, dom 10.4.2, user-event 14.6.7). `npm audit --omit=dev` limpio.
+- **M1-05 i18n:** `src/i18n/` con `es` por defecto (el detector solo mira `localStorage`, así un
+  visitante nuevo siempre ve español), `en`, `<html lang>` sincronizado, mensajes por código de
+  error (`errors.<code>`) con los límites interpolados, `LanguageSwitcher` y fechas con `Intl`.
+- **M1-06 rutas:** `BrowserRouter` declarativo, `AuthLayout` y `AppLayout`, guards
+  `RequireAuth`, `PublicOnly` y `RequireMissingUsername`, `AuthProvider` sobre
+  `onAuthStateChanged`, página 404. La cuenta Google de demo (sin username) pasa por
+  `/choose-username`: es la interfaz de M2-06 adelantada sobre el mock (no se marcó M2-06).
+- **M1-07/M1-08:** header con textura de latón cepillado, navegación y componentes compartidos
+  (Button/LinkButton, TextField/TextArea, Card con remaches, TweetCard con el formato G-06,
+  UserListItem, Pagination, CounterGauge tipo manómetro, Notice, Toast, EmptyState, Spinner,
+  PagedList, PageHeader). ESLint: `require-default-props` en `defaultArguments` porque React 19
+  ignora `defaultProps`.
+- **M1-09:** `usePaginatedList` con pila de cursores; el estado de carga se deriva de la última
+  petición resuelta (la regla `react-hooks/set-state-in-effect` prohíbe `setState` síncrono en
+  efectos). 9 tests: vacío, 10, 11, adelante/atrás, recarga, página vaciada, error, cambio de
+  fuente y respuesta tardía.
+- **M1-10…M1-17:** páginas de registro, login, inicio, redactar (contador por code points, aviso a
+  20 del límite, bloqueo sobre 280), siguiendo, seguidores (botón Seguir solo si se sabe que no lo
+  sigo; contadores refrescados por `SocialProvider`), perfil de usuario y feed. La lógica vive en
+  hooks (`useForm`, `useTweetDraft`, `useFollowUser`, `useFollowCounts`…).
+- **M1-18:** auditoría en Chrome headless (la extensión de Chrome no estaba conectada) a 360, 768
+  y 1280 px: áreas táctiles de 44 px, labels, nombres accesibles, un `h1` por página, sin scroll
+  horizontal; skip link; login completo solo con teclado; contraste de los pares de color nuevos
+  ≥ 4.5:1 en ambos temas. Se corrigió el enlace `@username` del header (36 px de ancho).
+- **M1-19:** README con funcionalidades, stack, puesta en marcha, arquitectura, pruebas y estilo.
+  CLAUDE.md: reglas de seguir y redirecciones, y trampas de React 19, `set-state-in-effect` y
+  entorno jsdom.
+- Verificación: 120 tests (38 nuevos, incluidos tests de integración que montan la app completa
+  sobre mocks), lint, `format:check` y build en verde; sin hex fuera de `tokens.css` ni textos sin
+  traducir. Pruebas de mutación: se reintrodujeron 4 defectos (sin retroceso de página, sin
+  descartar respuestas tardías, botón Seguir siempre visible, conteo UTF-16) y cada uno hizo fallar
+  al menos un test. Un test de orden alfabético falló por usar `localeCompare` en vez de la regla
+  del dominio; se corrigió el test, no la app.
+- Revisión independiente (subagente Claude Sonnet, solo lectura). Se corrigieron los hallazgos
+  reales: tras cerrar sesión, el siguiente usuario aterrizaba en la última página del anterior
+  (ahora la sesión sabe que terminó y el guard no guarda `from`); el botón Seguir reaparecía unos
+  300 ms tras seguir y podía pulsarse dos veces (se oculta mientras el estado recarga; pendientes
+  por usuario); un error de paginación no permitía volver a la primera página; el contador no
+  hacía `trim` como el servicio; un error viejo del login tapaba uno nuevo; sin scroll arriba ni
+  foco en el contenido al cambiar de ruta; los botones de paginación se deshabilitaban con el foco
+  encima; el contador no se anunciaba a lectores de pantalla; los contadores mostraban 0 mientras
+  cargaban. Se reforzaron los tests débiles que señaló (el de perfil no probaba el botón Seguir) y
+  se agregaron tests de logout + nuevo login, registro, cambio de idioma y seguir desde un perfil.
+  Cada corrección se verificó reintroduciendo el defecto: siempre falló al menos un test.
+- Pendiente menor (no corregido): un fallo al cerrar sesión no muestra mensaje; un primer login
+  con Google pierde el enlace profundo al que se quería ir.
+
+### Archivos creados o modificados
+
+- `src/i18n/*` (i18n, errorKey, useErrorMessage, locales es/en + test), `src/auth/*`,
+  `src/social/*`, `src/routes/*` (paths, guards, AppRoutes + test), `src/layouts/*`,
+  `src/hooks/*` (usePaginatedList + test, useAsyncData, useAsyncAction, useForm, useFollowData,
+  useFollowUser, useTweetDraft + test, useLogout, usePageTitle), `src/pages/*` (+ pages.test),
+  `src/components/*` (Button, TextField, Card, TweetCard + test, UserListItem, Pagination,
+  CounterGauge, Notice, Toast, EmptyState, Spinner, Logo, LanguageSwitcher, Header, MainNav,
+  SocialPanel, PageHeader, PagedList, icons), `src/AppProviders.jsx`, `src/test/renderApp.jsx`,
+  `src/utils/formatDateTime.js` (creados)
+- `src/App.jsx`, `src/main.jsx`, `src/components/ThemeToggle/ThemeToggle.jsx`, `src/styles/global.css`,
+  `eslint.config.js`, `package.json`, `package-lock.json` (modificados)
+- `README.md`, `CLAUDE.md`, `docs/milestone-1.md` (seguimiento M1-05…M1-19),
+  `docs/milestone-2.md` (nota en M2-06), `bitacora.md`
