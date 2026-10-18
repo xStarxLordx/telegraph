@@ -1,10 +1,29 @@
 <!doctype html>
-<html lang="en">
+<html lang="es" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Telegraph</title>
+    <script>
+      // Applies the saved theme before React mounts, so the page never flashes the wrong one.
+      // Keep the key and the theme names in sync with src/theme/themePreference.js.
+      (function applySavedTheme() {
+        try {
+          if (window.localStorage.getItem('telegraph.theme') === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+          }
+        } catch {
+          // Storage blocked (private mode): keep the default dark theme.
+        }
+      })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Lora:ital,wght@0,400;0,600;1,400&family=Special+Elite&display=swap"
+    />
   </head>
   <body>
     <div id="root"></div>

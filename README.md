@@ -49,15 +49,15 @@ src/
 ├── services/    Service contracts, the ServicesProvider and their implementations
 │   └── mock/    In-memory implementation with demo data (Milestone 1)
 ├── utils/       Generic helpers (storage)
+├── theme/       ThemeProvider, useTheme and the saved theme preference
 ├── hooks/       React hooks (data access goes through useServices)
 ├── components/  Reusable UI components
 ├── pages/       One component per route
 ├── i18n/        Translations (es, en)
-└── styles/      Design tokens and global styles
+└── styles/      Design tokens (tokens.css) and global styles
 ```
 
-`hooks/`, `components/`, `pages/`, `i18n/` and `styles/` are created by the tasks that fill them
-(M1-04 to M1-17).
+`hooks/`, `pages/` and `i18n/` are created by the tasks that fill them (M1-05 to M1-17).
 
 - The UI talks to four services (`authService`, `userService`, `tweetService`,
   `followService`) through `useServices()`. Their contracts are documented in
@@ -69,6 +69,11 @@ src/
   `follow/already-following`), which the UI translates.
 - Validation and limits (280 characters counted in code points, username format, alphabetical sort
   keys) live in `src/domain/`, so the mocks and Firebase enforce the same rules.
+- Colors exist only in `src/styles/tokens.css`, as CSS custom properties (see
+  [the design system](docs/design-system.md)). A theme only changes their values: `data-theme`
+  on `<html>` selects the palette, dark by default. An inline script in `index.html` applies the
+  saved theme (`localStorage` key `telegraph.theme`) before React mounts, so the page never
+  flashes the wrong theme. Components style themselves with CSS Modules.
 
 ## Code style
 
