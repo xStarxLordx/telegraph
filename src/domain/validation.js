@@ -15,9 +15,14 @@ const USERNAME_PATTERN = new RegExp(
 // Pragmatic check: something@something.tld. Real verification is the provider's job.
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/** Usernames are compared and stored case-insensitively; the leading "@" is optional. */
+/** The username as typed, without surrounding spaces or the optional leading "@". */
+export function cleanUsername(username) {
+  return username.trim().replace(/^@/, '');
+}
+
+/** Usernames are compared case-insensitively: this is the key to look one up by. */
 export function normalizeUsername(username) {
-  return username.trim().replace(/^@/, '').toLowerCase();
+  return cleanUsername(username).toLowerCase();
 }
 
 export function validateFullName(fullName) {
@@ -28,7 +33,7 @@ export function validateFullName(fullName) {
 }
 
 export function validateUsername(username) {
-  const value = username.trim().replace(/^@/, '');
+  const value = cleanUsername(username);
   if (!value) return ErrorCode.REQUIRED;
   if (!USERNAME_PATTERN.test(value)) return ErrorCode.USERNAME_INVALID;
   return null;

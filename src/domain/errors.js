@@ -6,6 +6,13 @@ export const ErrorCode = Object.freeze({
   NOT_AUTHENTICATED: 'auth/not-authenticated',
   /** The acting user isn't the logged-in user (Firestore rules reject it too). */
   PERMISSION_DENIED: 'auth/permission-denied',
+  /** The provider blocked the account for a while after too many failed logins. */
+  TOO_MANY_ATTEMPTS: 'auth/too-many-attempts',
+  /** The user closed the Google popup before finishing. */
+  LOGIN_CANCELLED: 'auth/login-cancelled',
+  /** The browser blocked the Google popup. */
+  POPUP_BLOCKED: 'auth/popup-blocked',
+  NETWORK_UNAVAILABLE: 'network/unavailable',
   USERNAME_TAKEN: 'user/username-taken',
   EMAIL_TAKEN: 'user/email-taken',
   USER_NOT_FOUND: 'user/not-found',
@@ -31,10 +38,11 @@ export const ErrorCode = Object.freeze({
 export class ServiceError extends Error {
   /**
    * @param {string} code One of {@link ErrorCode}.
-   * @param {{ field?: string }} [options] `field` names the form field the error belongs to.
+   * @param {{ field?: string, cause?: unknown }} [options] `field` names the form field the error
+   *   belongs to; `cause` keeps the original provider error for debugging (the UI ignores it).
    */
-  constructor(code, { field } = {}) {
-    super(code);
+  constructor(code, { field, cause } = {}) {
+    super(code, cause === undefined ? undefined : { cause });
     this.name = 'ServiceError';
     this.code = code;
     this.field = field ?? null;
