@@ -1,4 +1,3 @@
-import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import Button from '../../components/Button/Button';
@@ -8,39 +7,18 @@ import { GoogleIcon } from '../../components/icons/icons';
 import Logo from '../../components/Logo/Logo';
 import Notice from '../../components/Notice/Notice';
 import TextField from '../../components/TextField/TextField';
-import { ErrorCode } from '../../domain/errors';
-import useAsyncAction from '../../hooks/useAsyncAction';
-import useForm from '../../hooks/useForm';
+import useLogin from '../../hooks/useLogin';
 import usePageTitle from '../../hooks/usePageTitle';
 import useErrorMessage from '../../i18n/useErrorMessage';
 import { Paths } from '../../routes/paths';
-import { useServices } from '../../services/ServicesContext';
 import styles from './AuthPages.module.css';
-
-const required = (value) => (value.trim() ? null : ErrorCode.REQUIRED);
 
 /** /login (R1.2): username + password, or Google. The PublicOnly guard redirects on success. */
 function LoginPage() {
   const { t } = useTranslation();
   const errorMessage = useErrorMessage();
-  const { authService } = useServices();
+  const { form, loginWithGoogle, googlePending, pending, error } = useLogin();
   usePageTitle(t('login.title'));
-  const google = useAsyncAction(useCallback(() => authService.loginWithGoogle(), [authService]));
-
-  const form = useForm({
-    idPrefix: 'login',
-    initialValues: { username: '', password: '' },
-    validate: ({ username, password }) => ({
-      username: required(username),
-      password: password ? null : ErrorCode.REQUIRED,
-    }),
-    submit: (values) => {
-      google.clearError();
-      return authService.loginWithUsername(values);
-    },
-  });
-  const busy = form.pending || google.pending;
-  const formError = form.formError ?? google.error;
 
   return (
     <Card framed>
@@ -52,7 +30,7 @@ function LoginPage() {
       </div>
 
       <form className={styles.form} onSubmit={form.handleSubmit} noValidate>
-        {formError && <Notice variant="error">{errorMessage(formError)}</Notice>}
+        {error && <Notice variant="error">{errorMessage(error)}</Notice>}
         <TextField
           {...form.fieldProps('username', errorMessage)}
           label={t('fields.username')}
@@ -68,7 +46,7 @@ function LoginPage() {
           autoComplete="current-password"
           required
         />
-        <Button type="submit" size="large" block pending={form.pending} disabled={google.pending}>
+        <Button type="submit" size="large" block pending={form.pending} disabled={googlePending}>
           {t('login.submit')}
         </Button>
       </form>
@@ -81,13 +59,9 @@ function LoginPage() {
         variant={ButtonVariant.SECONDARY}
         size="large"
         block
-        onClick={() => {
-          // Only the latest attempt's error is shown.
-          form.clearFormError();
-          google.run();
-        }}
-        pending={google.pending}
-        disabled={busy && !google.pending}
+        onClick={loginWithGoogle}
+        pending={googlePending}
+        disabled={pending && !googlePending}
       >
         <GoogleIcon />
         {t('login.google')}

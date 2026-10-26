@@ -4,6 +4,7 @@ import { ErrorCode, ServiceError } from './errors';
 import { compareByFullName, compareByNewest } from './sorting';
 import { countCharacters, toSortKey } from './text';
 import {
+  cleanUsername,
   normalizeUsername,
   validateEmail,
   validateFullName,
@@ -52,7 +53,8 @@ describe('validators', () => {
     expect(validateUsername('@ada_99')).toBeNull();
   });
 
-  it('normalizes usernames for comparison', () => {
+  it('cleans usernames keeping their case, and normalizes them for comparison', () => {
+    expect(cleanUsername(' @Ada ')).toBe('Ada');
     expect(normalizeUsername(' @Ada ')).toBe('ada');
   });
 
@@ -122,5 +124,11 @@ describe('ServiceError', () => {
     expect(error.code).toBe('user/username-taken');
     expect(error.field).toBe('username');
     expect(new ServiceError(ErrorCode.FOLLOW_SELF).field).toBeNull();
+  });
+
+  it('keeps the original error as the cause', () => {
+    const original = new Error('provider failure');
+    expect(new ServiceError(ErrorCode.UNKNOWN, { cause: original }).cause).toBe(original);
+    expect(new ServiceError(ErrorCode.UNKNOWN).cause).toBeUndefined();
   });
 });

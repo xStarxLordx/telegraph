@@ -5,53 +5,19 @@ import Card from '../../components/Card/Card';
 import Logo from '../../components/Logo/Logo';
 import Notice from '../../components/Notice/Notice';
 import TextField from '../../components/TextField/TextField';
-import { ErrorCode } from '../../domain/errors';
-import {
-  validateEmail,
-  validateFullName,
-  validatePassword,
-  validateUsername,
-} from '../../domain/validation';
-import useForm from '../../hooks/useForm';
 import usePageTitle from '../../hooks/usePageTitle';
-import { ERROR_MESSAGE_VALUES, UiErrorCode } from '../../i18n/errorKey';
+import useRegister from '../../hooks/useRegister';
+import { ERROR_MESSAGE_VALUES } from '../../i18n/errorKey';
 import useErrorMessage from '../../i18n/useErrorMessage';
 import { Paths } from '../../routes/paths';
-import { useServices } from '../../services/ServicesContext';
 import styles from './AuthPages.module.css';
-
-const initialValues = { fullName: '', username: '', email: '', password: '', confirmPassword: '' };
-
-/** Same rules as the service (src/domain), plus the UI-only password confirmation. */
-function validate(values) {
-  let confirmPassword = null;
-  if (!values.confirmPassword) confirmPassword = ErrorCode.REQUIRED;
-  else if (values.confirmPassword !== values.password) {
-    confirmPassword = UiErrorCode.PASSWORDS_MISMATCH;
-  }
-  return {
-    fullName: validateFullName(values.fullName),
-    username: validateUsername(values.username),
-    email: validateEmail(values.email),
-    password: validatePassword(values.password),
-    confirmPassword,
-  };
-}
 
 /** /register (R1.1). Registering logs in, and the PublicOnly guard then goes home. */
 function RegisterPage() {
   const { t } = useTranslation();
   const errorMessage = useErrorMessage();
-  const { authService } = useServices();
+  const form = useRegister();
   usePageTitle(t('register.title'));
-
-  const form = useForm({
-    idPrefix: 'register',
-    initialValues,
-    validate,
-    submit: ({ fullName, username, email, password }) =>
-      authService.register({ fullName, username, email, password }),
-  });
 
   return (
     <Card framed>

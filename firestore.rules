@@ -1,0 +1,43 @@
+rules_version = '2';
+
+// Everything not listed here is denied. The limits below mirror src/domain/constants.js
+// (USERNAME_MIN/MAX_LENGTH = 3/15, FULL_NAME_MAX_LENGTH = 50): keep them in sync.
+// Only the account collection exists so far; `tweets` and `follows` get their rules in M2-02.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isUsernameKey(key) {
+      return key.matches('^[a-z0-9_]{3,15}$');
+    }
+
+    // users/{usernameLower} -> { uid, fullName, username, email, createdAt }: one document per
+    // account, keyed by its lowercase username. The key is what makes a username unique, and the
+    // login reads it before anyone is signed in to turn the username into the account's email.
+    match /users/{usernameLower} {
+      // Readable by anyone, one document at a time: it exposes the email of a username you
+      // already know (accepted trade-off for this class project, noted in the README).
+      allow get: if true;
+      // Signed-in users search by `uid` to find their own profile; listing is not public.
+      allow list: if signedIn();
+
+      allow create: if signedIn()
+        && isUsernameKey(usernameLower)
+        && request.resource.data.keys().hasOnly(
+          ['uid', 'fullName', 'username', 'email', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.fullName is string
+        && request.resource.data.fullName.size() >= 1
+        && request.resource.data.fullName.size() <= 50
+        && request.resource.data.username is string
+        && request.resource.data.username.lower() == usernameLower
+        && request.resource.data.email.lower() == request.auth.token.email.lower()
+        && request.resource.data.createdAt == request.time;
+
+      allow update, delete: if false;
+    }
+  }
+}
