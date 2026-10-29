@@ -4,6 +4,9 @@
 //   npm run seed -- --dry-run   show what would be written; needs no credentials
 //   npm run seed                create the accounts and documents (safe to repeat)
 //   npm run seed -- --clean     delete every demo account and what it published or follows
+//   npm run seed -- --follow <username>
+//                               make a real account follow some demo accounts (after seeding);
+//                               --clean removes those follows too
 //
 // It uses the Admin SDK, which skips the security rules: that is what lets the tweets be dated in
 // the past. Point GOOGLE_APPLICATION_CREDENTIALS at a service account key of the project in
@@ -13,7 +16,7 @@ import { cert, initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import chunk from '../src/utils/chunk.js';
-import { buildDemoDataset, DEMO_PASSWORD, DEMO_UID_PREFIX } from './demoData.js';
+import { buildDemoDataset, buildFollowsOf, DEMO_PASSWORD, DEMO_UID_PREFIX } from './demoData.js';
 
 const IN_LIMIT = 30; // values Firestore accepts in one `in` filter
 const AUTH_BATCH = 100; // identifiers Auth looks up per call
@@ -25,12 +28,17 @@ function fail(message) {
 }
 
 function parseArguments(argv) {
-  const flags = new Set(argv);
-  const unknown = argv.filter((flag) => !['--clean', '--dry-run'].includes(flag));
-  if (unknown.length > 0) fail(`Unknown option: ${unknown.join(' ')}\nUse --dry-run or --clean.`);
-  if (flags.has('--clean') && flags.has('--dry-run'))
-    fail('--clean and --dry-run exclude each other.');
-  return { clean: flags.has('--clean'), dryRun: flags.has('--dry-run') };
+  const followAt = argv.indexOf('--follow');
+  const follow = followAt === -1 ? null : argv[followAt + 1];
+  if (followAt !== -1 && (!follow || follow.startsWith('--')))
+    fail('--follow needs a username: npm run seed -- --follow <username>');
+  const flags = new Set(followAt === -1 ? argv : argv.toSpliced(followAt, 2));
+  const unknown = [...flags].filter((flag) => !['--clean', '--dry-run'].includes(flag));
+  if (unknown.length > 0)
+    fail(`Unknown option: ${unknown.join(' ')}\nUse --dry-run, --clean or --follow <username>.`);
+  if (flags.size + (follow ? 1 : 0) > 1)
+    fail('--clean, --dry-run and --follow exclude each other.');
+  return { clean: flags.has('--clean'), dryRun: flags.has('--dry-run'), follow };
 }
 
 /** Connects with the service account key, after checking it belongs to this repo's project. */
@@ -165,6 +173,27 @@ async function seed(connection, dataset) {
   if (JSON.stringify(present) !== JSON.stringify(expected)) fail('The read-back does not match.');
 }
 
+/** Makes the real account with `username` follow the demo accounts `buildFollowsOf` picks. */
+async function followDemoAccounts({ db }, dataset, username) {
+  const snapshot = await db.collection('users').doc(username.toLowerCase()).get();
+  if (!snapshot.exists) fail(`There is no account @${username}. Nothing changed.`);
+  const account = snapshot.data();
+  if (account.uid.startsWith(DEMO_UID_PREFIX))
+    fail(`@${account.username} is a demo account: its follows come from the seed.`);
+  const follows = buildFollowsOf(account, dataset);
+  const followees = await db.getAll(
+    ...follows.map(({ data }) => db.collection('users').doc(data.followeeUsername.toLowerCase())),
+  );
+  if (!followees.every((profile) => profile.exists))
+    fail('Some demo accounts are missing: run `npm run seed` first. Nothing changed.');
+  await writeDocuments(db, { users: [], tweets: [], follows });
+  const present = (
+    await db.getAll(...follows.map(({ id }) => db.collection('follows').doc(id)))
+  ).filter((document) => document.exists).length;
+  console.log(`@${account.username} now follows ${present} of ${follows.length} demo accounts.`);
+  if (present !== follows.length) fail('The read-back does not match.');
+}
+
 /** Everything the demo accounts own: their tweets and every follow that involves them. */
 async function findDemoDocuments(db, uids) {
   const paths = new Map();
@@ -201,7 +230,7 @@ async function clean({ auth, db }, dataset) {
 }
 
 async function main() {
-  const { clean: cleaning, dryRun } = parseArguments(process.argv.slice(2));
+  const { clean: cleaning, dryRun, follow } = parseArguments(process.argv.slice(2));
   const dataset = buildDemoDataset();
   if (dryRun) {
     console.log('Dry run: nothing is written. The dataset would contain', describe(dataset));
@@ -211,6 +240,7 @@ async function main() {
   const connection = connect();
   console.log(`Project: ${connection.projectId}`);
   if (cleaning) await clean(connection, dataset);
+  else if (follow) await followDemoAccounts(connection, dataset, follow);
   else await seed(connection, dataset);
 }
 

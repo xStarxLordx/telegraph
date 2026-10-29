@@ -10,7 +10,13 @@ import createFirebaseUserService from '../src/services/firebase/firebaseUserServ
 import { fakeFirestore } from '../src/test/fakeFirestore';
 import { collectPages, createFakeAuth } from '../src/test/firebaseFixtures';
 import { allowedFields } from '../src/test/firestoreRules';
-import { buildDemoDataset, DEMO_PASSWORD, DEMO_UID_PREFIX, demoUid } from './demoData';
+import {
+  buildDemoDataset,
+  buildFollowsOf,
+  DEMO_PASSWORD,
+  DEMO_UID_PREFIX,
+  demoUid,
+} from './demoData';
 
 vi.mock('firebase/firestore', async () => (await import('../src/test/fakeFirestore')).default);
 
@@ -194,5 +200,42 @@ describe('what each demo account shows', () => {
       page.items.map((u) => toSortKey(u.fullName)),
     );
     expect(names).toEqual([...names].sort());
+  });
+});
+
+describe('--follow: a real account following demo accounts', () => {
+  const real = { uid: 'real-uid', username: 'Fran', fullName: 'Francisco López' };
+  const realFollows = buildFollowsOf(real, dataset, { now: NOW });
+
+  beforeEach(() => {
+    fakeFirestore.set('users/fran', { ...real, email: 'fran@example.com', createdAt: NOW });
+    realFollows.forEach(({ id, data }) => fakeFirestore.set(`follows/${id}`, data));
+  });
+
+  it('writes follows of demo accounts only, shaped as the security rules expect', () => {
+    const profiles = new Map(dataset.users.map(({ data }) => [data.uid, data]));
+    expect(new Set(realFollows.map(({ id }) => id)).size).toBe(realFollows.length);
+    realFollows.forEach(({ id, data }) => {
+      expect(id).toBe(`real-uid_${data.followeeId}`);
+      expect(data).toMatchObject({ followerId: 'real-uid', followerUsername: 'Fran' });
+      expect(data.followerFullNameLower).toBe(toSortKey(real.fullName));
+      const followee = profiles.get(data.followeeId);
+      expect([data.followeeUsername, data.followeeFullName]).toEqual([
+        followee.username,
+        followee.fullName,
+      ]);
+      expect(Object.keys(data).sort()).toEqual([...allowedFields('follows')].sort());
+    });
+  });
+
+  it('fills several feed pages, newest first, and leaves demo accounts to follow', async () => {
+    const pages = await collectPages((page) => tweets.listFeed('real-uid', page));
+    expect(pages.length).toBeGreaterThan(2);
+    const dates = pages.flatMap((page) => page.items.map((tweet) => Date.parse(tweet.createdAt)));
+    expect(dates).toEqual([...dates].sort((a, b) => b - a));
+
+    const following = await collectPages((page) => follows.listFollowing('real-uid', page));
+    expect(sizesOf(following)).toEqual([PAGE_SIZE, PAGE_SIZE, realFollows.length - 2 * PAGE_SIZE]);
+    expect(realFollows.length).toBeLessThan(dataset.users.length);
   });
 });

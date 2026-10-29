@@ -164,15 +164,18 @@ function extraFollows(people) {
   return pairs;
 }
 
+/** A person's uid: the one given (a real account) or the demo uid of their username. */
+const uidOf = (person) => person.uid ?? demoUid(person.username);
+
 function followDocument(follower, followee, createdAt) {
   return {
-    id: `${demoUid(follower.username)}_${demoUid(followee.username)}`,
+    id: `${uidOf(follower)}_${uidOf(followee)}`,
     data: {
-      followerId: demoUid(follower.username),
+      followerId: uidOf(follower),
       followerUsername: follower.username,
       followerFullName: follower.fullName,
       followerFullNameLower: toSortKey(follower.fullName),
-      followeeId: demoUid(followee.username),
+      followeeId: uidOf(followee),
       followeeUsername: followee.username,
       followeeFullName: followee.fullName,
       followeeFullNameLower: toSortKey(followee.fullName),
@@ -271,4 +274,24 @@ export function buildDemoDataset({ now = new Date() } = {}) {
   ];
 
   return { accounts, users, tweets: [...seedTweets, ...addedTweets], follows };
+}
+
+// The demo accounts a real account follows with `npm run seed -- --follow <username>`: the ones
+// with the most tweets, so its feed fills several pages, while the rest still show "Follow".
+const FOLLOWED_BY_REAL_ACCOUNTS = [
+  ...['ada', 'babbage', 'tesla', 'mshelley', 'verne', 'mcurie', 'hgwells', 'brunel', 'hlamarr'],
+  ...['emilie', ...HISTORICAL_PEOPLE.map(([username]) => username)],
+];
+
+/**
+ * @param {{ uid: string, username: string, fullName: string }} account A real (non-demo) account.
+ * @param {ReturnType<typeof buildDemoDataset>} dataset
+ * @param {{ now?: Date }} [options]
+ * @returns {Array<{ id: string, data: object }>} Its follows of the demo accounts above.
+ */
+export function buildFollowsOf(account, dataset, { now = new Date() } = {}) {
+  const profiles = new Map(dataset.users.map(({ data }) => [data.username, data]));
+  return FOLLOWED_BY_REAL_ACCOUNTS.map((username) =>
+    followDocument(account, profiles.get(username), now),
+  );
 }
