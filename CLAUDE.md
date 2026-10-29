@@ -129,11 +129,12 @@ The tracking tables in `docs/` say which tasks are finished; this is only what t
   `getCountFromServer` for "Page X of Y" (M3-01).
 - Firebase web config goes in `.env.local` as `VITE_FIREBASE_*` (no `VITE_` prefix means
   `undefined` at runtime). The config isn't secret: **security rules** protect the data.
-- **Tweet length: the three limits do NOT agree for emoji.** The UI and the service count code
-  points (`[...text].length`); the rules' `size()` counts UTF-16 units (measured on the deployed
-  project, 2026-10-28: 280 × `ñ` and 140 × 😀 are accepted, 141 × 😀 is denied). Accented text
-  is unaffected, but a tweet with many emoji can pass the UI and be denied by the rules
-  (`auth/permission-denied`). Not fixed yet.
+- **Tweet length is counted in code points everywhere; the rules do it with a regex, not `size()`.**
+  `size()` counts UTF-16 units (an emoji is 2: on the deployed project 141 × 😀 was denied), so the
+  tweet rule is `body.matches('(?s)^.{1,280}$')`: RE2's `.` is one code point and `(?s)` lets it
+  match line breaks. Checked on the real project (2026-10-28) with 280 / 281 characters of ASCII,
+  `ñ`, emoji, line breaks and mixes. The `fullName` limit in the `users` rule still uses
+  `size()`: only a name with emoji near 50 characters would notice.
 - **Feed pagination over chunked queries:** one cursor (the last tweet shown) serves every chunk,
   because all chunks share the same order. Each page asks every chunk for 11 after it, merges and
   keeps the 10 newest (M2-12). Don't add a cursor per chunk: it is redundant.

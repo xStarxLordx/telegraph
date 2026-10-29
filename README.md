@@ -92,6 +92,9 @@ Decisions and trade-offs:
   can't drift.
 - **Timestamps come from the server** (`createdAt == request.time`), so they can't be forged
   from a client.
+- **Tweet length is counted in code points** (an emoji is one character) in the UI, the service and
+  the rules. The rules use `body.matches('(?s)^.{1,280}$')`, because `size()` counts UTF-16 units
+  and would count an emoji twice.
 
 ### Pagination and the feed
 

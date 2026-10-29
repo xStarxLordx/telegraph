@@ -471,3 +471,47 @@ No se editan ni se borran entradas anteriores.
   `eslint.config.js` (bloque para `scripts/`), `.gitignore` (patrones de claves),
   `src/services/firebase/firestoreRules.test.js` (usa el helper compartido), `README.md`,
   `CLAUDE.md`, `bitacora.md`
+
+---
+
+## 2026-10-28 23:07 (UTC-5) — Commits de la sesión y regla de longitud de tweets por code points
+
+- **Herramienta:** Claude Code (CLI)
+- **Modelo:** Claude Sonnet 5.5 (`claude-sonnet-5-5`)
+
+### Mensaje del estudiante (textual)
+
+> Si dale has commit de todo lo que se logró en esta sesión y puedes hacer lo de cambiar la regla a body.matches('(?s)^.{1,280}$')
+
+### Resumen de la respuesta
+
+- **Tablas de seguimiento:** se marcaron M2-02, M2-03 y M2-09 a M2-12 (verificadas contra el
+  proyecto real el mismo día) y, tras la regla, M2-08. Cada nota dice qué se comprobó y qué no se
+  vio en un navegador. No se marcaron M2-01, M2-04 a M2-07, M2-13 ni M2-14.
+- **Commits** (locales, sin push ni PR), en la rama `feature/M2-02-to-M2-12-firebase-services`,
+  sin firmas de IA: helpers compartidos, reglas e índices, servicios Firebase, script de seed y
+  documentación. Se verificó cada commit en un worktree limpio: los tres últimos pasan lint y todos
+  los tests; los dos primeros fallan solo por el viejo test `createAppServices` de M1, que necesita
+  `.env.local` (ignorado por Git). Ese fallo **ya existía en `develop`** (`9ec4670`, comprobado) y
+  el tercer commit lo corrige al reemplazar el test.
+- **Regla de longitud:** `body.size() >= 1 && body.size() <= 280` pasó a
+  `body.matches('(?s)^.{1,280}$')`, porque `size()` cuenta unidades UTF-16. Se actualizó el test
+  que sincroniza reglas y código. Se desplegó solo `firestore:rules` con la sesión de la CLI
+  (compiló y se publicó; el rollback era volver a desplegar la versión del commit anterior).
+- **Verificación contra el backend real** (archivo temporal, ya borrado), 20 casos, todos como se
+  esperaba: 280 y 281 caracteres de ASCII, `ñ`, emoji, saltos de línea y mezclas (280 emoji se
+  aceptan, 281 se rechazan); vacío y no-string rechazados; autor falso, nombre falso, fecha
+  atrasada y campo extra siguen rechazados; por el servicio, 280 emoji se publican y 281 fallan con
+  `validation/tweet-too-long`. Los 8 tweets de prueba se borraron: `novato` quedó en 0.
+- **Errores míos durante la sesión, corregidos antes de commitear:** un script de edición reemplazó
+  el título de `milestone-2.md` y, más tarde, otro duplicó el README porque `String.replace`
+  interpreta `$'` en el texto de reemplazo. En ambos casos se detectó revisando el diff, se
+  restauró (el título a mano; el README desde `HEAD`) y se rehizo con `Edit`.
+- **Pendiente:** `fullName` en la regla de `users` sigue usando `size()` (solo afecta a nombres con
+  emoji cerca de 50 caracteres). Falta decidir push y PR.
+- Verificación final: lint, `format:check`, build y 252 tests en verde.
+
+### Archivos creados o modificados
+
+- `firestore.rules`, `src/services/firebase/firestoreRules.test.js`, `CLAUDE.md`, `README.md`,
+  `docs/milestone-2.md`, `bitacora.md`
