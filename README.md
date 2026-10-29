@@ -9,7 +9,7 @@ The UI has two themes: **Brass & Soot**, a dark steampunk retro theme (the defau
 
 ## Features
 
-Milestone 1 delivers every page of the app on mock data:
+The app has these pages:
 
 | Route              | Page                                                                         |
 | ------------------ | ---------------------------------------------------------------------------- |
@@ -37,36 +37,133 @@ Every list shows 10 items per page. Private pages share a header with the logo, 
 
 ## Getting started
 
-Requirements: Node.js 22+ and npm.
+Requirements: Node.js 22+ and npm, and a Firebase project (see [Firebase setup](#firebase-setup)).
 
 ```bash
 npm install
+cp .env.example .env.local   # then fill in the Firebase web config
 npm run dev
 ```
 
-Open <http://localhost:5173>. Until Milestone 2 connects Firebase, the app runs on **mock
-services** with demo data:
+Open <http://localhost:5173>. The app talks to Firebase (Authentication + Cloud Firestore) for
+accounts, tweets and follows. If a `VITE_FIREBASE_*` variable is missing the app doesn't start:
+the console names the missing variables.
 
-- Every demo account uses the password `telegraph`. Try `ada`, who has the most data (every list
-  has two or more pages).
-- "Continue with Google" logs in a demo Google account, which first has to choose a username.
-- Changes are kept in the browser's `localStorage`; delete the `telegraph.mock.v1` key to restore
-  the demo data. Use a single tab: the mock storage isn't synced between tabs.
-- The mocks add 300 ms of latency on purpose, so loading states are visible.
+The **mock services** in `src/services/mock/` (an in-memory copy of the backend with demo
+data) are what the tests run on; the running app doesn't use them. Their demo accounts (`ada`,
+password `telegraph`…) don't exist in Firebase.
+
+## Firebase setup
+
+1. In the [Firebase console](https://console.firebase.google.com/) create a project, add a
+   **Web app**, enable **Authentication** (Email/Password and Google) and **Cloud Firestore**.
+2. Copy the web app config into `.env.local` (see `.env.example`). It is not secret: the
+   security rules protect the data.
+3. Deploy the rules and indexes (`firebase.json` and `.firebaserc` already point at the project):
+
+   ```bash
+   npx firebase-tools login
+   npx firebase-tools deploy --only firestore:rules,firestore:indexes
+   ```
+
+   Indexes take a few minutes to build; until then the lists fail with "requires an index".
+
+### Data model
+
+Three collections (`src/services/firebase/collections.js`); the rules are in `firestore.rules`.
+
+| Collection / document id            | Fields                                                                                                  | Notes                                                                                             |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `users/{usernameLower}`             | `uid`, `fullName`, `username`, `email`, `createdAt`                                                     | The key makes a username unique and lets the login find the email of a username.                  |
+| `tweets/{autoId}`                   | `authorId`, `authorFullName`, `authorUsername`, `body`, `createdAt`                                     | Author's name copied in, so a feed needs no joins. Never edited or deleted.                       |
+| `follows/{followerId}_{followeeId}` | `followerId/Username/FullName/FullNameLower`, `followeeId/Username/FullName/FullNameLower`, `createdAt` | One document per follow: the id rules out duplicates. `...FullNameLower` is the alphabetical key. |
+
+Decisions and trade-offs:
+
+- **One document per account** (`users/{usernameLower}`) is the profile, the username claim and
+  the login lookup. A profile is found by `uid` with a query, so signed-in users can list `users`.
+- **Public read of one `users` document** exposes the email of a username you already know. It is
+  needed to log in with a username, and accepted for this class project.
+- **The rules cannot limit an account to one profile**, so a signed-in client could claim
+  several usernames by writing to Firestore directly. Also accepted.
+- **Copies of names are checked by the rules** against the author's profile (`get()`), so nobody
+  can publish or follow under a name that isn't theirs, or follow a username nobody has.
+- **Counters are never stored**: followers and following come from `getCountFromServer`, so they
+  can't drift.
+- **Timestamps come from the server** (`createdAt == request.time`), so they can't be forged
+  from a client.
+
+### Pagination and the feed
+
+Firestore's web SDK has no offset, so every list is cursor-paginated: a page is
+`startAfter(<last document shown>)` + `limit`, the cursor is that document's id, and the total
+for "Page X of Y" comes from `getCountFromServer` (`src/services/firebase/paginateQuery.js`).
+
+The feed is "my tweets + those of everyone I follow". Firestore allows at most 30 values in an
+`in` filter, so the authors are split into chunks of 30 and every chunk is queried on its own.
+All chunks share one order (newest first), so **one cursor serves all of them**: the last tweet
+shown. Each page asks every chunk for up to 11 tweets after it, merges them, shows the 10
+newest, and there is a next page when more than 10 came back. What a chunk didn't return can
+only come after the last tweet shown, so nothing is skipped or repeated, even if the people I
+follow change between pages.
+
+Known limits: every page reads the whole list of people I follow (one read per follow) and
+does one query and one count per chunk, so a feed costs more reads as the follow list grows.
+
+### Demo data
+
+`npm run seed` fills the project with a demo network: 42 accounts, 97 tweets and 200 follows.
+It builds on the mock seed and adds people and tweets for every screen and edge case
+(`scripts/demoData.js`; its tests run the real services over it). Every account has the
+password `telegraph` and the email `<username>@telegraph.test`.
+
+| Log in as          | To see                                                                                  |
+| ------------------ | --------------------------------------------------------------------------------------- |
+| `ada`              | The full tour: 2 pages of following, followers and tweets, and followers to follow back |
+| `telegrafista`     | A feed over 32 followed people (two `in` chunks)                                        |
+| `diez`             | Exactly 10 tweets, followers and following: one page, no paging                         |
+| `once`             | Exactly 11 of each: a second page with a single item                                    |
+| `novato`           | A brand-new account: every empty state                                                  |
+| `diez` → following | Two people named Mary Shelley (`mshelley`, `mshelley2`), ordered by username            |
+| `Hypatia`          | A username stored with capitals; it is found in any case                                |
+
+`ada` also has a 280-character tweet, one with emoji and one over several lines. Google
+sign-in can't be seeded: try it with a real Google account.
+
+```bash
+npm run seed -- --dry-run   # show what would be written (needs no credentials)
+npm run seed                # create everything (safe to repeat: ids are fixed)
+npm run seed -- --clean     # delete the demo accounts and whatever they published or follow
+```
+
+The script uses the Admin SDK, which skips the security rules, so it needs a **service account
+key** of the project in `.firebaserc` (Firebase console › Project settings › Service accounts ›
+Generate new private key). Keep that file **outside the repository** (it is a secret; `.gitignore`
+only catches the usual names) and point `GOOGLE_APPLICATION_CREDENTIALS` at it:
+
+```bash
+GOOGLE_APPLICATION_CREDENTIALS=/path/to/key.json npm run seed
+```
+
+It refuses a key from another project, and stops without writing if a real account already uses
+one of the demo usernames or emails. `--clean` only touches accounts whose uid starts with
+`demo-`. Mind that the demo accounts are real Firebase Authentication accounts with a published
+password: run `--clean` when the demo is over.
 
 ## Scripts
 
-| Script                 | Description                       |
-| ---------------------- | --------------------------------- |
-| `npm run dev`          | Start the development server      |
-| `npm run build`        | Build for production into `dist/` |
-| `npm run preview`      | Preview the production build      |
-| `npm run lint`         | Lint the source code              |
-| `npm run lint:fix`     | Lint and auto-fix what ESLint can |
-| `npm run format`       | Format every file with Prettier   |
-| `npm run format:check` | Check formatting without writing  |
-| `npm test`             | Run the test suite once (Vitest)  |
-| `npm run test:watch`   | Run tests in watch mode           |
+| Script                 | Description                                                           |
+| ---------------------- | --------------------------------------------------------------------- |
+| `npm run dev`          | Start the development server                                          |
+| `npm run build`        | Build for production into `dist/`                                     |
+| `npm run preview`      | Preview the production build                                          |
+| `npm run lint`         | Lint the source code                                                  |
+| `npm run lint:fix`     | Lint and auto-fix what ESLint can                                     |
+| `npm run format`       | Format every file with Prettier                                       |
+| `npm run format:check` | Check formatting without writing                                      |
+| `npm run seed`         | Load / remove the demo data in Firebase (see [Demo data](#demo-data)) |
+| `npm test`             | Run the test suite once (Vitest)                                      |
+| `npm run test:watch`   | Run tests in watch mode                                               |
 
 ## Architecture
 
@@ -74,7 +171,8 @@ services** with demo data:
 src/
 ├── domain/      Pure business rules: limits, validation, sort keys, ServiceError codes
 ├── services/    Service contracts, the ServicesProvider and their implementations
-│   └── mock/    In-memory implementation with demo data (Milestone 1)
+│   ├── firebase/ Firebase implementation: Auth + Firestore, pagination helper
+│   └── mock/    In-memory implementation with demo data, used by the tests
 ├── auth/        AuthProvider + useAuth: the session, mirrored from authService
 ├── social/      SocialProvider + useSocial: follow actions shared by every screen
 ├── theme/       ThemeProvider, useTheme and the saved theme preference
@@ -96,8 +194,8 @@ the mock data, and business logic stays out of JSX.
   `followService`) through `useServices()`. Their contracts are documented in
   `src/services/contracts.js`. Every method is async and every list is cursor-paginated:
   `{ items, nextCursor, total }`.
-- `src/services/createAppServices.js` is the only place that picks an implementation. Milestone 2
-  replaces the mocks with Firebase there, and no component changes.
+- `src/services/createAppServices.js` is the only place that picks an implementation: Firebase
+  for the running app, the mocks for the tests. No component knows which one it talks to.
 - Business failures throw a `ServiceError` with a stable `code` (for example
   `follow/already-following`), which the UI translates.
 - Validation and limits (280 characters counted in code points, username format, alphabetical sort
@@ -125,6 +223,13 @@ the mock data, and business logic stays out of JSX.
 Library: route guards, login and logout, Google onboarding, publishing, following and the
 paginated lists. Tests that need a DOM declare `// @vitest-environment jsdom` at the top.
 
+The Firebase services are tested against `src/test/fakeFirestore.js`, an in-memory Firestore
+that orders, filters and pages like the real one and **rejects** what Firestore rejects when a
+query runs: more than 30 values in an `in`, and a query whose composite index is missing from
+`firestore.indexes.json`. It does **not** run the security rules (they need the Firebase
+emulator): `firestoreRules.test.js` only checks that the rules' fields and limits match the
+code. Tests never contact a Firebase project.
+
 ## Code style
 
 The project follows the [Airbnb JavaScript Style Guide](https://github.com/airbnb/javascript),
@@ -141,10 +246,12 @@ enforced by ESLint, with Prettier owning formatting.
   function components, so optional props get their defaults when destructuring.
 - **Prettier 3** (`.prettierrc.json`: single quotes, semicolons, trailing commas, 100 columns,
   LF) runs last through `eslint-config-prettier`, so the two tools never disagree.
-- `npm audit` reports high-severity advisories in `braces`, pulled in through
-  `@next/eslint-plugin-next`, a dependency of the Airbnb config. They affect **dev tooling only**:
-  `npm audit --omit=dev` is clean. Don't run `npm audit fix --force`, because it downgrades the
-  Airbnb config to an unusable 0.1.x.
+- `npm audit` reports 4 high-severity advisories, all from `@grpc/grpc-js` ≤ 1.13.5, which
+  `firebase` pins (`@firebase/firestore` depends on `~1.9`; `firebase` 13.1.0 is the latest). They
+  concern gRPC server code that only Node loads: the browser bundle doesn't contain it. They are
+  there since Firebase was added, and there is nothing to upgrade to yet. Don't run
+  `npm audit fix --force`: it downgrades `firebase` to 9.x. Revisit when a newer `firebase`
+  moves to a patched `@grpc/grpc-js`.
 
 ## Project documentation
 
@@ -160,6 +267,3 @@ enforced by ESLint, with Prettier owning formatting.
   on `feature/<task-id>-<slug>` or `fix/<slug>`.
 - Commits follow [Conventional Commits](https://www.conventionalcommits.org/).
 - Every change reaches `develop` through a pull request (see the PR template).
-
-<!-- Sections to complete in later tasks: Firebase setup and data model (M2-01, M2-02),
-     feed limitations (M2-12). -->
