@@ -1,0 +1,27 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.counter {
+  font-variant-numeric: tabular-nums;
+}
+
+.ok {
+  color: var(--color-text-muted);
+}
+
+.near {
+  color: var(--color-accent);
+}
+
+.over {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}

@@ -1,0 +1,60 @@
+.washes {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.blob {
+  position: absolute;
+  opacity: var(--wash-opacity);
+  filter: blur(40px);
+}
+
+.one {
+  top: 180px;
+  left: -140px;
+  width: 420px;
+  height: 340px;
+  border-radius: 45% 55% 40% 60% / 55% 45% 60% 40%;
+  background: var(--color-wash-2);
+}
+
+.two {
+  top: 52%;
+  right: -120px;
+  width: 460px;
+  height: 380px;
+  border-radius: 62% 38% 55% 45% / 48% 60% 40% 52%;
+  background: var(--color-wash-1);
+}
+
+.three {
+  bottom: -100px;
+  left: 30%;
+  width: 420px;
+  height: 260px;
+  border-radius: 58% 42% 50% 50% / 40% 55% 45% 60%;
+  background: var(--color-wash-3);
+}
+
+.gear {
+  position: absolute;
+  fill: none;
+  stroke: var(--color-watermark);
+}
+
+.gearLarge {
+  top: -140px;
+  left: -160px;
+  width: 520px;
+  height: 520px;
+}
+
+.gearSmall {
+  right: -80px;
+  bottom: -110px;
+  width: 360px;
+  height: 360px;
+}

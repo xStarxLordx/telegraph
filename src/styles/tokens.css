@@ -1,0 +1,82 @@
+/*
+ * Design tokens (docs/design-system.md). The only file allowed to contain color values.
+ * Themes switch with `data-theme` on <html> and change color values only: fonts, radii and
+ * every other token are shared. Dark ("Brass & Soot") is the default.
+ */
+
+:root {
+  --font-display: 'Cinzel', Georgia, serif;
+  --font-body: 'Lora', Georgia, serif;
+  --font-mono: 'Special Elite', 'Courier New', monospace;
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+
+  --touch-target: 44px;
+  --content-max-width: 1200px;
+}
+
+/* Brass & Soot (dark, default): also applies when data-theme is missing. */
+:root,
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --color-bg: #14100c;
+  --color-surface: #1f1913;
+  --color-surface-raised: #2b2219;
+  --color-surface-sunken: #0e0b08;
+  --color-border: #5a4630;
+  --color-border-soft: #3a2d1f;
+  --color-text: #f0e4cc;
+  --color-text-muted: #b9a684;
+  --color-text-disabled: #6e5e48;
+  --color-primary: #d4a64a;
+  --color-primary-hover: #f2c46d;
+  --color-on-primary: #1a130c;
+  --color-accent: #c9733c;
+  --color-success: #5fa39a;
+  --color-success-bg: #15211f;
+  --color-success-text: #9fd3cb;
+  --color-danger: #e0674f;
+  --color-rivet: #d4a64a;
+  --color-gauge-ticks: #5a4630;
+  --color-header-stripe-a: #2b2219;
+  --color-header-stripe-b: #271f17;
+  --color-watermark: #2b2219;
+  --color-wash-1: #d4a64a;
+  --color-wash-2: #c9733c;
+  --color-wash-3: #5fa39a;
+  --wash-opacity: 0.08;
+}
+
+/* Ivory Wash (light). */
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --color-bg: #fbf6ec;
+  --color-surface: #fffdf7;
+  --color-surface-raised: #f4ecdd;
+  --color-surface-sunken: #f7f1e5;
+  --color-border: #d9c7aa;
+  --color-border-soft: #eadfcb;
+  --color-text: #2f2a25;
+  --color-text-muted: #6e6357;
+  --color-text-disabled: #a99c8c;
+  --color-primary: #3d5a8c;
+  --color-primary-hover: #2f4a75;
+  --color-on-primary: #fffdf7;
+  --color-accent: #b4532e;
+  --color-success: #4f7a55;
+  --color-success-bg: #e3ede1;
+  --color-success-text: #3b5e40;
+  --color-danger: #a63d40;
+  --color-rivet: #b89a6e;
+  --color-gauge-ticks: #d2c0a3;
+  --color-header-stripe-a: #fffdf7;
+  --color-header-stripe-b: #f8f1e3;
+  --color-watermark: #efe5d3;
+  --color-wash-1: #c9d6ea;
+  --color-wash-2: #efc9b4;
+  --color-wash-3: #d6e3cf;
+  --wash-opacity: 0.5;
+}

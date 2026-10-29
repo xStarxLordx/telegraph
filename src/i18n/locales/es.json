@@ -1,0 +1,167 @@
+{
+  "app": {
+    "name": "Telegraph",
+    "title": "Telegraph"
+  },
+  "common": {
+    "loading": "Cargando…",
+    "retry": "Reintentar",
+    "dismiss": "Cerrar aviso"
+  },
+  "theme": {
+    "switchToLight": "Cambiar a modo claro",
+    "switchToDark": "Cambiar a modo oscuro"
+  },
+  "language": {
+    "label": "Idioma",
+    "es": "Español",
+    "en": "English"
+  },
+  "header": {
+    "home": "Ir al inicio",
+    "account": "Cuenta",
+    "profile": "Mis tweets, @{{username}}",
+    "logout": "Cerrar sesión"
+  },
+  "nav": {
+    "label": "Principal",
+    "skipToContent": "Saltar al contenido",
+    "home": "Inicio",
+    "feed": "Feed",
+    "myTweets": "Mis tweets",
+    "following": "Siguiendo",
+    "followers": "Seguidores",
+    "tweet": "Tweet"
+  },
+  "fields": {
+    "fullName": "Nombre completo",
+    "username": "Nombre de usuario",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "confirmPassword": "Confirmar contraseña"
+  },
+  "login": {
+    "title": "Iniciar sesión",
+    "subtitle": "Inicia sesión para enviar tus despachos.",
+    "usernamePlaceholder": "ada",
+    "submit": "Iniciar sesión",
+    "or": "o",
+    "google": "Continuar con Google",
+    "noAccount": "¿No tienes cuenta?",
+    "registerLink": "Regístrate"
+  },
+  "register": {
+    "title": "Crear cuenta",
+    "subtitle": "Únete a la red de despachos cortos.",
+    "usernameHint": "De {{usernameMin}} a {{usernameMax}} caracteres: letras, números y _.",
+    "passwordHint": "Al menos {{passwordMin}} caracteres.",
+    "submit": "Crear cuenta",
+    "haveAccount": "¿Ya tienes cuenta?",
+    "loginLink": "Inicia sesión"
+  },
+  "chooseUsername": {
+    "title": "Elige tu nombre de usuario",
+    "subtitle": "Es la primera vez que entras con Google. Elige cómo te verán los demás.",
+    "submit": "Continuar"
+  },
+  "home": {
+    "title": "Hola, {{name}}",
+    "subtitle": "Tu estación de telégrafo personal.",
+    "composePrompt": "¿Qué quieres contarle al mundo hoy?",
+    "tweet": "Tweet",
+    "feedHint": "Tus tweets y los de quienes sigues.",
+    "myTweetsHint": "Todo lo que has publicado."
+  },
+  "compose": {
+    "title": "Nuevo tweet",
+    "subtitle": "Hasta {{max}} caracteres por despacho.",
+    "label": "Tu tweet",
+    "placeholder": "Escribe tu despacho…",
+    "counter": "{{count}} / {{max}}",
+    "overLimit": "demasiado largo",
+    "submit": "Publicar",
+    "published": "Tweet publicado.",
+    "nearLimitAnnouncement": "Quedan pocos caracteres.",
+    "overLimitAnnouncement": "El tweet supera el límite de caracteres."
+  },
+  "feed": {
+    "title": "Feed",
+    "subtitle": "Tus tweets y los de quienes sigues, del más reciente al más antiguo.",
+    "emptyTitle": "Tu feed está vacío",
+    "emptyMessage": "Publica tu primer tweet o sigue a alguien para ver sus despachos aquí.",
+    "emptyAction": "Ver mis seguidores"
+  },
+  "following": {
+    "title": "Siguiendo",
+    "subtitle_one": "Sigues a {{count}} persona, en orden alfabético.",
+    "subtitle_other": "Sigues a {{count}} personas, en orden alfabético.",
+    "emptyTitle": "Aún no sigues a nadie",
+    "emptyMessage": "Empieza por seguir de vuelta a tus seguidores."
+  },
+  "followers": {
+    "title": "Seguidores",
+    "subtitle_one": "{{count}} persona te sigue, en orden alfabético.",
+    "subtitle_other": "{{count}} personas te siguen, en orden alfabético.",
+    "emptyTitle": "Aún no tienes seguidores",
+    "emptyMessage": "Publica tus primeros despachos para que te encuentren."
+  },
+  "follow": {
+    "follow": "Seguir",
+    "followUser": "Seguir a @{{username}}",
+    "followed": "Ahora sigues a @{{username}}."
+  },
+  "counters": {
+    "title": "Manómetro social",
+    "followers": "Seguidores",
+    "following": "Siguiendo"
+  },
+  "user": {
+    "thisIsYou": "Este es tu perfil.",
+    "tweetsTitle": "Tweets de {{name}}",
+    "tweetsHeading_one": "{{count}} tweet",
+    "tweetsHeading_other": "{{count}} tweets",
+    "noTweets": "@{{username}} aún no ha publicado nada",
+    "notFoundTitle": "Usuario no encontrado",
+    "notFoundMessage": "No existe ninguna cuenta con el nombre de usuario @{{username}}.",
+    "tweets": "Tweets"
+  },
+  "pagination": {
+    "label": "Paginación",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "status": "Página {{page}} de {{totalPages}}",
+    "first": "Ir a la primera página"
+  },
+  "notFound": {
+    "title": "Página no encontrada",
+    "message": "Este despacho se perdió por el camino: la dirección no existe.",
+    "backHome": "Volver al inicio"
+  },
+  "errors": {
+    "auth/invalid-credentials": "Usuario o contraseña incorrectos.",
+    "auth/not-authenticated": "Tu sesión terminó. Vuelve a iniciar sesión.",
+    "auth/permission-denied": "No tienes permiso para hacer esto.",
+    "auth/too-many-attempts": "Demasiados intentos fallidos. Espera unos minutos e inténtalo de nuevo.",
+    "auth/login-cancelled": "Cerraste la ventana de Google antes de terminar.",
+    "auth/popup-blocked": "Tu navegador bloqueó la ventana de Google. Permite las ventanas emergentes e inténtalo de nuevo.",
+    "network/unavailable": "No hay conexión con el servidor. Revisa tu internet e inténtalo de nuevo.",
+    "user/username-taken": "Ese nombre de usuario ya está en uso.",
+    "user/email-taken": "Ya existe una cuenta con ese correo.",
+    "user/not-found": "No existe ese usuario.",
+    "user/username-already-set": "Tu cuenta ya tiene nombre de usuario.",
+    "user/username-required": "Elige un nombre de usuario antes de continuar.",
+    "follow/self": "No puedes seguirte a ti mismo.",
+    "follow/already-following": "Ya sigues a este usuario.",
+    "pagination/invalid-cursor": "No se pudo cargar esta página. Vuelve a la primera.",
+    "pagination/invalid-page-size": "Tamaño de página no válido.",
+    "unknown": "Algo salió mal. Inténtalo de nuevo.",
+    "validation/required": "Este campo es obligatorio.",
+    "validation/full-name-too-long": "El nombre puede tener como máximo {{fullNameMax}} caracteres.",
+    "validation/username-invalid": "Usa de {{usernameMin}} a {{usernameMax}} caracteres: letras, números y _.",
+    "validation/email-invalid": "Escribe un correo válido, como nombre@dominio.com.",
+    "validation/password-too-short": "La contraseña debe tener al menos {{passwordMin}} caracteres.",
+    "validation/tweet-empty": "El tweet no puede estar vacío.",
+    "validation/tweet-too-long": "El tweet puede tener como máximo {{tweetMax}} caracteres.",
+    "validation/passwords-mismatch": "Las contraseñas no coinciden."
+  }
+}

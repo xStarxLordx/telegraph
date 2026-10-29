@@ -1,0 +1,51 @@
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--touch-target);
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: 1.0625rem;
+  text-decoration: none;
+}
+
+.link:hover {
+  color: var(--color-primary-hover);
+}
+
+.active {
+  border-color: var(--color-border);
+  background: var(--color-surface-raised);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* Narrow screens: the nav becomes a wrapping row of chips above the content. */
+@media (max-width: 760px) {
+  .list {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .link {
+    padding: 0 10px;
+    font-size: 0.9375rem;
+  }
+}

@@ -1,0 +1,39 @@
+.item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px dashed var(--color-border);
+  background: var(--color-surface);
+}
+
+.item:first-child {
+  border-top: 1px dashed var(--color-border);
+}
+
+.identity {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: var(--touch-target);
+  min-width: 0;
+  text-decoration: none;
+}
+
+.name {
+  font-weight: 600;
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+
+.username {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--color-accent);
+}
+
+.identity:hover .name {
+  color: var(--color-primary-hover);
+}
