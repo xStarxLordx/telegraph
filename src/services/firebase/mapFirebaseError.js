@@ -18,6 +18,7 @@ const FIREBASE_ERRORS = Object.freeze({
   'auth/network-request-failed': { code: ErrorCode.NETWORK_UNAVAILABLE },
   // Cloud Firestore
   'permission-denied': { code: ErrorCode.PERMISSION_DENIED },
+  unauthenticated: { code: ErrorCode.NOT_AUTHENTICATED },
   unavailable: { code: ErrorCode.NETWORK_UNAVAILABLE },
 });
 
@@ -32,4 +33,27 @@ export default function mapFirebaseError(error) {
     field: mapped?.field,
     cause: error,
   });
+}
+
+/**
+ * Wraps a service method so whatever it throws reaches the UI as a ServiceError. An unexpected
+ * error (a missing index, a rule that denies something it shouldn't…) shows the UI only a generic
+ * message, so the original is logged for whoever is debugging.
+ * @template {(...args: any[]) => Promise<any>} T
+ * @param {T} method
+ * @returns {T}
+ */
+export function withMappedErrors(method) {
+  return async (...args) => {
+    try {
+      return await method(...args);
+    } catch (error) {
+      const mapped = mapFirebaseError(error);
+      if (mapped.code === ErrorCode.UNKNOWN) {
+        // eslint-disable-next-line no-console
+        console.error('Unexpected Firebase error.', error);
+      }
+      throw mapped;
+    }
+  };
 }

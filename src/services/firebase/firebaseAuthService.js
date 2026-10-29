@@ -10,17 +10,7 @@ import {
   signInWithPopup,
   signOut,
 } from 'firebase/auth';
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  limit,
-  query,
-  runTransaction,
-  serverTimestamp,
-  where,
-} from 'firebase/firestore';
+import { doc, getDoc, runTransaction, serverTimestamp } from 'firebase/firestore';
 import { ErrorCode, ServiceError } from '../../domain/errors';
 import {
   cleanUsername,
@@ -32,6 +22,7 @@ import {
 } from '../../domain/validation';
 import Collection from './collections';
 import mapFirebaseError from './mapFirebaseError';
+import { findProfileByUid } from './profiles';
 
 function assertValid(field, code) {
   if (code) throw new ServiceError(code, { field });
@@ -68,14 +59,6 @@ export default function createFirebaseAuthService({ auth, db }) {
 
   const profileRef = (usernameLower) => doc(db, Collection.USERS, usernameLower);
 
-  /** The key is the username, so an account's profile is found by its `uid` field instead. */
-  const findProfileByUid = async (uid) => {
-    const result = await getDocs(
-      query(collection(db, Collection.USERS), where('uid', '==', uid), limit(1)),
-    );
-    return result.empty ? null : result.docs[0].data();
-  };
-
   const publish = (user) => {
     if (isSameUser(current, user)) return;
     current = user;
@@ -87,7 +70,7 @@ export default function createFirebaseAuthService({ auth, db }) {
 
   /** Builds the CurrentUser for the signed-in Firebase user; no profile yet means no username. */
   const readCurrentUser = async (firebaseUser) => {
-    const profile = await findProfileByUid(firebaseUser.uid);
+    const profile = await findProfileByUid(db, firebaseUser.uid);
     return {
       id: firebaseUser.uid,
       fullName: profile?.fullName ?? fallbackFullName(firebaseUser),
@@ -249,7 +232,7 @@ export default function createFirebaseAuthService({ auth, db }) {
       try {
         // A transaction can't run queries, so "this account already has a username" is checked
         // first. It only guards against the same user claiming twice (e.g. a double click).
-        if (await findProfileByUid(firebaseUser.uid)) {
+        if (await findProfileByUid(db, firebaseUser.uid)) {
           throw new ServiceError(ErrorCode.USERNAME_ALREADY_SET);
         }
         await claimUsernameFor(firebaseUser, {

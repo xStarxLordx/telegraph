@@ -1,8 +1,8 @@
 rules_version = '2';
 
 // Everything not listed here is denied. The limits below mirror src/domain/constants.js
-// (USERNAME_MIN/MAX_LENGTH = 3/15, FULL_NAME_MAX_LENGTH = 50): keep them in sync.
-// Only the account collection exists so far; `tweets` and `follows` get their rules in M2-02.
+// (USERNAME_MIN/MAX_LENGTH = 3/15, FULL_NAME_MAX_LENGTH = 50, MAX_TWEET_LENGTH = 280): keep them
+// in sync. firestoreRules.test.js fails when the fields or limits here drift from the code.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -14,6 +14,22 @@ service cloud.firestore {
       return key.matches('^[a-z0-9_]{3,15}$');
     }
 
+    // True when the profile stored under `key` (a lowercase username) belongs to account `uid`
+    // and says exactly this username and full name.
+    function matchesProfile(key, uid, username, fullName) {
+      let profile = get(/databases/$(database)/documents/users/$(key)).data;
+      return profile.uid == uid && profile.username == username && profile.fullName == fullName;
+    }
+
+    // Tweets and follows carry copies of people's names. This stops anyone from writing a name
+    // that isn't the one the account registered with, and (for follows) from following a
+    // username nobody has: `get` of a missing profile makes the whole rule fail.
+    function isAccount(uid, username, fullName) {
+      return username is string
+        && isUsernameKey(username.lower())
+        && matchesProfile(username.lower(), uid, username, fullName);
+    }
+
     // users/{usernameLower} -> { uid, fullName, username, email, createdAt }: one document per
     // account, keyed by its lowercase username. The key is what makes a username unique, and the
     // login reads it before anyone is signed in to turn the username into the account's email.
@@ -21,7 +37,7 @@ service cloud.firestore {
       // Readable by anyone, one document at a time: it exposes the email of a username you
       // already know (accepted trade-off for this class project, noted in the README).
       allow get: if true;
-      // Signed-in users search by `uid` to find their own profile; listing is not public.
+      // Signed-in users search by `uid` to find a profile; listing is not public.
       allow list: if signedIn();
 
       allow create: if signedIn()
@@ -35,6 +51,67 @@ service cloud.firestore {
         && request.resource.data.username is string
         && request.resource.data.username.lower() == usernameLower
         && request.resource.data.email.lower() == request.auth.token.email.lower()
+        && request.resource.data.createdAt == request.time;
+
+      allow update, delete: if false;
+    }
+
+    // tweets/{autoId} -> { authorId, authorFullName, authorUsername, body, createdAt }.
+    // Tweets are never edited or deleted. The body length is counted in code points, like the app
+    // does (G-10): `size()` counts UTF-16 units, so an emoji would count twice. RE2's `.` matches
+    // one code point, and `(?s)` lets it match line breaks too.
+    match /tweets/{tweetId} {
+      allow read: if signedIn();
+
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(
+          ['authorId', 'authorFullName', 'authorUsername', 'body', 'createdAt'])
+        && request.resource.data.keys().hasAll(
+          ['authorId', 'authorFullName', 'authorUsername', 'body', 'createdAt'])
+        && request.resource.data.authorId == request.auth.uid
+        && isAccount(
+          request.auth.uid,
+          request.resource.data.authorUsername,
+          request.resource.data.authorFullName)
+        && request.resource.data.body is string
+        && request.resource.data.body.matches('(?s)^.{1,280}$')
+        && request.resource.data.createdAt == request.time;
+
+      allow update, delete: if false;
+    }
+
+    // follows/{followerId_followeeId} -> both people's uid, username and full name, the two
+    // `...FullNameLower` sort keys and `createdAt`. The id is derived from the two uids, so a
+    // second follow of the same person is an update, which is denied: no duplicates. Nobody
+    // can follow on behalf of someone else or follow themselves. There is no unfollow.
+    match /follows/{followId} {
+      allow read: if signedIn();
+
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(
+          ['followerId', 'followerUsername', 'followerFullName', 'followerFullNameLower',
+           'followeeId', 'followeeUsername', 'followeeFullName', 'followeeFullNameLower',
+           'createdAt'])
+        && request.resource.data.keys().hasAll(
+          ['followerId', 'followerUsername', 'followerFullName', 'followerFullNameLower',
+           'followeeId', 'followeeUsername', 'followeeFullName', 'followeeFullNameLower',
+           'createdAt'])
+        && request.resource.data.followerId == request.auth.uid
+        && request.resource.data.followeeId is string
+        && request.resource.data.followeeId != request.resource.data.followerId
+        && followId == request.resource.data.followerId + '_' + request.resource.data.followeeId
+        && isAccount(
+          request.resource.data.followerId,
+          request.resource.data.followerUsername,
+          request.resource.data.followerFullName)
+        && isAccount(
+          request.resource.data.followeeId,
+          request.resource.data.followeeUsername,
+          request.resource.data.followeeFullName)
+        && request.resource.data.followerFullNameLower is string
+        && request.resource.data.followerFullNameLower.size() <= 100
+        && request.resource.data.followeeFullNameLower is string
+        && request.resource.data.followeeFullNameLower.size() <= 100
         && request.resource.data.createdAt == request.time;
 
       allow update, delete: if false;

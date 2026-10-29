@@ -1,21 +1,17 @@
-// The single place that decides which service implementation the app uses.
-// Milestone 2 (M2-03) swaps them one by one: sessions already run on Firebase; users, tweets and
-// follows stay on the mocks until their own tasks (M2-08 to M2-12). Nothing else changes.
-import { getBrowserStorage } from '../utils/storage';
+// The single place that decides which service implementation the app uses: Firebase for all
+// four services. The mocks (src/services/mock) stay for the tests; nothing else changes.
 import { getFirebaseAuth, getFirebaseDb } from './firebase/firebaseApp';
 import createFirebaseAuthService from './firebase/firebaseAuthService';
-import createMockServices from './mock/createMockServices';
-
-/** Simulated network latency, so loading states are visible while running on mocks. */
-const MOCK_LATENCY_MS = 300;
+import createFirebaseFollowService from './firebase/firebaseFollowService';
+import createFirebaseTweetService from './firebase/firebaseTweetService';
+import createFirebaseUserService from './firebase/firebaseUserService';
 
 export default function createAppServices() {
-  const mockServices = createMockServices({
-    storage: getBrowserStorage(),
-    latencyMs: MOCK_LATENCY_MS,
-  });
+  const deps = { auth: getFirebaseAuth(), db: getFirebaseDb() };
   return {
-    ...mockServices,
-    authService: createFirebaseAuthService({ auth: getFirebaseAuth(), db: getFirebaseDb() }),
+    authService: createFirebaseAuthService(deps),
+    userService: createFirebaseUserService(deps),
+    tweetService: createFirebaseTweetService(deps),
+    followService: createFirebaseFollowService(deps),
   };
 }

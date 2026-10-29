@@ -45,18 +45,21 @@ error instead of a blank page.
 ### M2-02 · Firestore data model, indexes and security rules
 
 **Description:** Define and document (in the README) the collections:
-`users/{uid}` (fullName, username, usernameLower, email, createdAt),
-`usernames/{usernameLower}` (uid, email: one document per username to guarantee uniqueness and
-resolve logins; it must be readable before login, which exposes the email of a known username,
-an accepted trade-off for this class project that should be noted in the README),
+`users/{usernameLower}` (uid, fullName, username, email, createdAt: one document per account,
+keyed by its lowercase username, which guarantees uniqueness and resolves logins. It must be
+readable before login, which exposes the email of a known username, an accepted trade-off for
+this class project that is noted in the README; a profile by `uid` is a query on the `uid`
+field),
 `tweets/{id}` (authorId, authorFullName, authorUsername, body, createdAt),
 `follows/{followerId_followeeId}` (followerId, followeeId, plus the denormalized full name and
 username of both sides, and `followerFullNameLower` / `followeeFullNameLower` sort keys
-(lowercase, accents removed) for the alphabetical lists in M3-02 and M3-03).
+(lowercase, accents removed) for the alphabetical lists in M3-02 and M3-03; the username breaks
+ties, like `compareByFullName`).
 Write `firestore.rules`: users write only their own documents; tweet `body` is a string of
-1–280 characters and `authorId == request.auth.uid` and `createdAt == request.time` (no forged timestamps); a follow can only be created by its
-follower; nobody can follow themselves. Add the composite indexes the queries need to
-`firestore.indexes.json`.
+1–280 characters and `authorId == request.auth.uid` and `createdAt == request.time` (no forged
+timestamps); the copied names on tweets and follows must match the author's profile (`get()`);
+a follow can only be created by its follower; nobody can follow themselves. Add the composite
+indexes the queries need to `firestore.indexes.json`.
 **Covers:** R2.2, R2.6 (server-side), G-05.
 **Depends on:** M2-01.
 **Blocks:** M2-03 … M2-12.
@@ -77,10 +80,10 @@ to them (keep the mocks for tests and demos). Map Firebase error codes to i18n k
 ### M2-04 · User registration logic
 
 **Description:** Auth calls can't run inside a Firestore transaction, so the flow is:
-(1) pre-check that `usernames/{usernameLower}` doesn't exist (fast feedback);
+(1) pre-check that `users/{usernameLower}` doesn't exist (fast feedback);
 (2) `createUserWithEmailAndPassword` (a duplicate email fails here with
-`auth/email-already-in-use`); (3) in a Firestore **transaction**, claim `usernames/{usernameLower}`
-(abort if someone took it since step 1) and write `users/{uid}`; (4) if step 3 fails, delete
+`auth/email-already-in-use`); (3) in a Firestore **transaction**, create `users/{usernameLower}`
+(abort if someone took it since step 1); (4) if step 3 fails, delete
 the Auth user just created so no half-created account is left behind. Show translated errors
 next to the matching field.
 **Covers:** R2.1, R2.2.
@@ -90,8 +93,8 @@ nothing; a valid registration logs in and lands on home.
 
 ### M2-05 · Login with username and password
 
-**Description:** Firebase Auth signs in with email, not username. Resolve
-`usernames/{usernameLower}` → email, then call `signInWithEmailAndPassword`. Show one generic
+**Description:** Firebase Auth signs in with email, not username. Read
+`users/{usernameLower}` → email, then call `signInWithEmailAndPassword`. Show one generic
 error ("invalid username or password") for both an unknown username and a wrong password, so the
 form doesn't reveal which usernames exist.
 **Covers:** R2.3.
@@ -171,9 +174,11 @@ lists links to this page, so the tweets of anyone in either list can be viewed.
 
 **Description:** Feed = my tweets + those of the users I follow, newest first. Firestore limits
 `in` filters to 30 values, so split the author IDs into chunks of up to 30, query each chunk
-with `orderBy createdAt desc`, and merge the results by date. **Pagination:** keep one cursor per
-chunk; each page fetches up to 10 from every chunk, merges them, keeps the 10 newest and
-advances only the cursors it consumed (total = the sum of the per-chunk counts). Document this
+with `orderBy createdAt desc`, and merge the results by date. **Pagination:** one cursor serves
+every chunk, because they share one order: the last tweet shown. Each page fetches up to 11
+after it from every chunk, merges them and keeps the 10 newest; there is a next page when more
+than 10 came back (total = the sum of the per-chunk counts). Whatever a chunk didn't return can
+only come after the last tweet shown, so nothing is skipped or repeated. Document this
 limitation and the chosen approach in the README.
 **Covers:** R2.9, R1.8.
 **Depends on:** M2-08, M2-10.
@@ -206,19 +211,19 @@ limitation), check that every new string exists in `es` and `en`, run lint and t
 
 Mark a task with `X` when it is done and write the date (`YYYY-MM-DD`). Notes are optional.
 
-| Done | ID    | Task                                              | Date | Notes                                                                            |
-| :--: | ----- | ------------------------------------------------- | ---- | -------------------------------------------------------------------------------- |
-| [ ]  | M2-01 | Firebase project and SDK setup                    |      |                                                                                  |
-| [ ]  | M2-02 | Firestore data model, indexes and security rules  |      |                                                                                  |
-| [ ]  | M2-03 | Firebase implementations of the service contracts |      |                                                                                  |
-| [ ]  | M2-04 | User registration logic                           |      |                                                                                  |
-| [ ]  | M2-05 | Login with username and password                  |      |                                                                                  |
-| [ ]  | M2-06 | Google sign-in and username onboarding            |      | `/choose-username` page and guard already built in M1 on the mock; wire Firebase |
-| [ ]  | M2-07 | Real auth session and route guards                |      |                                                                                  |
-| [ ]  | M2-08 | Publish tweet logic                               |      |                                                                                  |
-| [ ]  | M2-09 | Followers and following counters on home          |      |                                                                                  |
-| [ ]  | M2-10 | Follow a user by username                         |      |                                                                                  |
-| [ ]  | M2-11 | View tweets of followers and following            |      |                                                                                  |
-| [ ]  | M2-12 | Real feed data                                    |      |                                                                                  |
-| [ ]  | M2-13 | Tests for validation and services                 |      |                                                                                  |
-| [ ]  | M2-14 | Milestone 2 wrap-up                               |      |                                                                                  |
+| Done | ID    | Task                                              | Date       | Notes                                                                                                                                                                                                          |
+| :--: | ----- | ------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [ ]  | M2-01 | Firebase project and SDK setup                    |            |                                                                                                                                                                                                                |
+| [X]  | M2-02 | Firestore data model, indexes and security rules  | 2026-10-28 | Rules + 3 composite indexes deployed; on the real project 13 malicious writes were denied, incl. a 281-character tweet. Tweet length counted in code points with an RE2 regex (280 emoji accepted, 281 denied) |
+| [X]  | M2-03 | Firebase implementations of the service contracts | 2026-10-28 | Auth, user, tweet and follow services on Firebase; no page or component changed. Mocks kept for tests                                                                                                          |
+| [ ]  | M2-04 | User registration logic                           |            |                                                                                                                                                                                                                |
+| [ ]  | M2-05 | Login with username and password                  |            |                                                                                                                                                                                                                |
+| [ ]  | M2-06 | Google sign-in and username onboarding            |            | `/choose-username` page and guard already built in M1 on the mock; wire Firebase                                                                                                                               |
+| [ ]  | M2-07 | Real auth session and route guards                |            |                                                                                                                                                                                                                |
+| [X]  | M2-08 | Publish tweet logic                               | 2026-10-28 | Real project: published tweet shows in the feed, 281 characters denied in the service and the rules, 280 emoji accepted. Toasts not viewed in a browser against Firebase                                       |
+| [X]  | M2-09 | Followers and following counters on home          | 2026-10-28 | getCountFromServer; checked through the service on the real project (ada 14/14, novato 0/1 after a follow). Gauges not viewed in a browser                                                                     |
+| [X]  | M2-10 | Follow a user by username                         | 2026-10-28 | Not found, self, already following and success all checked through the service on the real project                                                                                                             |
+| [X]  | M2-11 | View tweets of followers and following            | 2026-10-28 | Tweets by author newest first, checked on the real project (ada 15 in pages 10 + 5). Pages not viewed in a browser                                                                                             |
+| [X]  | M2-12 | Real feed data                                    | 2026-10-28 | One cursor for all chunks. Real project: 32 followees = 65 tweets in 7 pages, unique and ordered                                                                                                               |
+| [ ]  | M2-13 | Tests for validation and services                 |            |                                                                                                                                                                                                                |
+| [ ]  | M2-14 | Milestone 2 wrap-up                               |            |                                                                                                                                                                                                                |

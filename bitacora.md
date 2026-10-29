@@ -334,3 +334,184 @@ No se editan ni se borran entradas anteriores.
   `eslint.config.js`, `package.json`, `package-lock.json` (modificados)
 - `README.md`, `CLAUDE.md`, `docs/milestone-1.md` (seguimiento M1-05…M1-19),
   `docs/milestone-2.md` (nota en M2-06), `bitacora.md`
+
+---
+
+## 2026-10-28 22:05 (UTC-5) — Revisión de la integración con Firebase y actualización del contexto
+
+- **Herramienta:** Claude Code (CLI)
+- **Modelo:** Claude Sonnet 5.5 (`claude-sonnet-5-5`)
+
+### Mensaje del estudiante (textual)
+
+> El fin de semana adelanté en el proyecto la implementación de firebase en todo el app, ya funciona el registro y el inicio de sesion, quiero que revises todo lo que hice nuevo y actualices el contexto del app en el claude.md y veamos qué tareas adicionales faltan del plan inicial para terminar y crear datos mockup para demostrar todas las funcionalidades del app
+
+### Resumen de la respuesta
+
+- Se revisó el commit `c13b029` (31 archivos): `authService` sobre Firebase, `firestore.rules` solo
+  para `users`, hooks `useLogin` / `useRegister` / `useChooseUsername`, `mapFirebaseError` y
+  tests. Línea base antes de editar: 173 tests, `lint`, `format:check` y `build` en verde.
+- Hallazgo verificado con una sonda temporal (borrada): `createAppServices` solo cambia
+  `authService`; los mocks de usuarios, tweets y follows consultan la sesión del mock, así que un
+  usuario de Firebase recibe `auth/not-authenticated` al publicar o seguir, y su perfil, contadores
+  y feed salen vacíos.
+- El modelo de datos implementado (`users/{usernameLower}`) difiere del texto de M2-02 / M2-04 /
+  M2-05; se documentó en `CLAUDE.md` junto con la consecuencia en las reglas.
+- Se agregó a `CLAUDE.md` la sección "Firebase wiring", se corrigió la regla de cuentas demo
+  (solo existen dentro del mock) y la trampa del login por username.
+- No se marcó ninguna tarea en las tablas de seguimiento ni se cambió código.
+
+### Archivos creados o modificados
+
+- `CLAUDE.md` (modificado), `bitacora.md` (nueva entrada)
+
+---
+
+## 2026-10-28 22:40 (UTC-5) — M2-02 y servicios Firebase (users, tweets, follows)
+
+- **Herramienta:** Claude Code (CLI)
+- **Modelo:** Claude Sonnet 5.5 (`claude-sonnet-5-5`)
+
+### Mensaje del estudiante (textual)
+
+> terminemos M2-02 y los servicios Firebase antes del seed.
+
+### Resumen de la respuesta
+
+- Rama `feature/M2-02-to-M2-12-firebase-services`, creada desde `origin/develop` (con el PR #5).
+- **Reglas e índices (M2-02):** `firestore.rules` cubre ahora `tweets` y `follows` (campos
+  exactos, 280 caracteres, `createdAt == request.time`, id de follow derivado de los dos uid,
+  sin ediciones ni borrados). Los nombres copiados en tweets y follows se comprueban contra el
+  perfil con `get()`. `firestore.indexes.json` tiene los 3 índices compuestos.
+- **Servicios (M2-03, M2-08 a M2-12 y el helper de M3-01):** `firebaseUserService`,
+  `firebaseTweetService`, `firebaseFollowService`, `paginateQuery` (cursor `startAfter` + total
+  con `getCountFromServer`) y `profiles` (extraído de `firebaseAuthService`, que ahora lo usa).
+  `createAppServices` entrega solo implementaciones Firebase; ninguna página ni componente
+  cambió (comprobado con `git status`).
+- **Decisión de diseño:** el feed por chunks usa **un solo cursor** (el último tweet mostrado) en
+  vez de uno por chunk como decía M2-12, porque todos los chunks comparten el orden; lo que un
+  chunk no devolvió queda después de ese tweet. Documentado en README, `milestone-2.md` y
+  `CLAUDE.md`. Las listas desempatan por nombre y luego `username`, igual que `compareByFullName`.
+- **Pruebas sin emulador (el equipo tiene Java 8):** `src/test/fakeFirestore.js` ordena, filtra y
+  pagina como Firestore y rechaza `in` con más de 30 valores y consultas sin índice compuesto en
+  `firestore.indexes.json`. No ejecuta las reglas; `firestoreRules.test.js` solo verifica que sus
+  campos y límites coincidan con el código.
+- Verificación: lint, `format:check`, build y 236 tests en verde (antes 173). Pruebas de mutación:
+  9 defectos en los servicios y 6 en reglas/código se reintrodujeron uno a uno y cada uno hizo
+  fallar al menos un test. Un test de M1 (`createAppServices` sobre `localStorage`) quedó obsoleto
+  y, con servicios reales, golpeaba el proyecto Firebase; se reemplazó por un test de composición
+  sin red.
+- **No verificado:** que las reglas compilen y se comporten como se espera, que los índices
+  construyan y el comportamiento contra el SDK real. Requiere desplegar (`firebase login` pendiente)
+  y probar la app. No se marcó ninguna tarea en las tablas de seguimiento.
+
+### Archivos creados o modificados
+
+- Creados: `src/services/firebase/` (`firebaseUserService`, `firebaseTweetService`,
+  `firebaseFollowService`, `paginateQuery`, `profiles` + tests de cada servicio y
+  `firestoreRules.test.js`), `src/test/` (`fakeFirestore`, `fakeFirestore.test`,
+  `firebaseFixtures`), `src/utils/chunk.js` (+ test), `src/services/createAppServices.test.js`
+- Modificados: `firestore.rules`, `firestore.indexes.json`, `src/services/createAppServices.js`,
+  `src/services/firebase/` (`collections`, `mapFirebaseError` + test, `firebaseAuthService`),
+  `src/domain/validation.js` (+ test), `src/services/mock/paginateArray.js`,
+  `src/utils/storage.test.js`, `README.md`, `CLAUDE.md`, `docs/milestone-2.md`, `bitacora.md`
+
+---
+
+## 2026-10-28 22:56 (UTC-5) — Datos demo en Firebase y prueba de extremo a extremo
+
+- **Herramienta:** Claude Code (CLI)
+- **Modelo:** Claude Sonnet 5.5 (`claude-sonnet-5-5`)
+
+### Mensajes del estudiante (textuales)
+
+1. > ya hice lo de npx firebase-tools deploy --only firestore:rules,firestore:indexes pero no veo los datos en el app
+2. > Quiero que inyectes los datos de mockup en firebase y ya creé la clave de service account y está en "[ruta omitida a propósito: es el archivo de una clave secreta, fuera del repositorio, y este repo es público]"
+
+### Resumen de la respuesta
+
+- **Diagnóstico del mensaje 1:** Firestore estaba vacío. Una lectura pública de `users/ada`,
+  `users/babbage` y `users/tesla` devolvió 404: los 25 usuarios demo existían solo en el mock, que
+  la app ya no usa. Los 3 índices estaban desplegados.
+- **Dataset (`scripts/demoData.js`):** la semilla del mock más 17 personas y 52 tweets nuevos:
+  42 cuentas, 97 tweets, 200 follows. Cubre: `ada` (2 páginas en todo), `telegrafista` (sigue a
+  32: el feed necesita dos chunks), `diez` (exactamente 10), `once` (exactamente 11), `novato`
+  (estados vacíos), dos "Mary Shelley" (desempate), `Hypatia` (username con mayúscula) y tweets de
+  280 caracteres, con emoji y multilínea. Es puro; sus tests (16) lo cargan en el Firestore falso y
+  ejecutan los servicios reales encima. Pruebas de mutación: 7 defectos, todos detectados (uno
+  sobrevivió al principio, un test tautológico sobre el prefijo `demo-`, y se corrigió).
+- **Script (`scripts/seed-firebase.mjs`, `npm run seed`):** Admin SDK; `--dry-run`, `--clean`.
+  Idempotente (ids fijos), rechaza una clave de otro proyecto, aborta si pisaría una cuenta real
+  y solo borra uids con prefijo `demo-`. Dependencia nueva: `firebase-admin` 14.5.0 (publicada el
+  2026-09-23), solo desarrollo.
+- **Ejecución real en `x-clone-desarrollo1`:** 42 cuentas creadas; lectura de vuelta: 42 / 42 / 97 / 200.
+- **Prueba de extremo a extremo** (archivo temporal, ya borrado) con el SDK de cliente y los
+  servicios reales contra las reglas e índices desplegados: login como `ada`, contadores 14/14,
+  listas `[10,4]`, feed de `telegrafista` con 65 tweets únicos y ordenados en 7 páginas; las 13
+  escrituras maliciosas (281 caracteres, autor falso, follow a nombre de otro, a sí mismo o a un
+  inexistente, editar y borrar) fueron rechazadas; publicar y seguir como `novato` funcionó.
+- **Hallazgos:**
+  1. Una prueba mía escribió `users/nuevoperfil` con el uid de `ada`: las reglas lo aceptan (es la
+     limitación ya documentada de varios perfiles por cuenta). Se borró.
+  2. **`size()` de las reglas cuenta unidades UTF-16**: 280 × `ñ` y 140 × 😀 se aceptan; 141 × 😀
+     se rechaza. La app cuenta code points, así que un tweet con muchos emoji pasa la UI y las
+     reglas lo deniegan. **Sin corregir; decisión pendiente.**
+  3. `npm audit` ya no muestra los avisos de `braces`; quedan 4 de `@grpc/grpc-js` vía `firebase`
+     (ya estaban antes de esta sesión, no están en el bundle del navegador). README y CLAUDE.md
+     tenían una afirmación obsoleta; se corrigió.
+- Todo lo creado por las pruebas se borró con Admin SDK: `novato` quedó con 0 tweets y 0 follows.
+- Verificación final: lint, `format:check`, build y 252 tests en verde. No se marcó ninguna tarea
+  en las tablas de seguimiento.
+
+### Archivos creados o modificados
+
+- Creados: `scripts/demoData.js`, `scripts/demoData.test.js`, `scripts/seed-firebase.mjs`,
+  `src/test/firestoreRules.js`
+- Modificados: `package.json` y `package-lock.json` (`firebase-admin`, script `seed`),
+  `eslint.config.js` (bloque para `scripts/`), `.gitignore` (patrones de claves),
+  `src/services/firebase/firestoreRules.test.js` (usa el helper compartido), `README.md`,
+  `CLAUDE.md`, `bitacora.md`
+
+---
+
+## 2026-10-28 23:07 (UTC-5) — Commits de la sesión y regla de longitud de tweets por code points
+
+- **Herramienta:** Claude Code (CLI)
+- **Modelo:** Claude Sonnet 5.5 (`claude-sonnet-5-5`)
+
+### Mensaje del estudiante (textual)
+
+> Si dale has commit de todo lo que se logró en esta sesión y puedes hacer lo de cambiar la regla a body.matches('(?s)^.{1,280}$')
+
+### Resumen de la respuesta
+
+- **Tablas de seguimiento:** se marcaron M2-02, M2-03 y M2-09 a M2-12 (verificadas contra el
+  proyecto real el mismo día) y, tras la regla, M2-08. Cada nota dice qué se comprobó y qué no se
+  vio en un navegador. No se marcaron M2-01, M2-04 a M2-07, M2-13 ni M2-14.
+- **Commits** (locales, sin push ni PR), en la rama `feature/M2-02-to-M2-12-firebase-services`,
+  sin firmas de IA: helpers compartidos, reglas e índices, servicios Firebase, script de seed y
+  documentación. Se verificó cada commit en un worktree limpio: los tres últimos pasan lint y todos
+  los tests; los dos primeros fallan solo por el viejo test `createAppServices` de M1, que necesita
+  `.env.local` (ignorado por Git). Ese fallo **ya existía en `develop`** (`9ec4670`, comprobado) y
+  el tercer commit lo corrige al reemplazar el test.
+- **Regla de longitud:** `body.size() >= 1 && body.size() <= 280` pasó a
+  `body.matches('(?s)^.{1,280}$')`, porque `size()` cuenta unidades UTF-16. Se actualizó el test
+  que sincroniza reglas y código. Se desplegó solo `firestore:rules` con la sesión de la CLI
+  (compiló y se publicó; el rollback era volver a desplegar la versión del commit anterior).
+- **Verificación contra el backend real** (archivo temporal, ya borrado), 20 casos, todos como se
+  esperaba: 280 y 281 caracteres de ASCII, `ñ`, emoji, saltos de línea y mezclas (280 emoji se
+  aceptan, 281 se rechazan); vacío y no-string rechazados; autor falso, nombre falso, fecha
+  atrasada y campo extra siguen rechazados; por el servicio, 280 emoji se publican y 281 fallan con
+  `validation/tweet-too-long`. Los 8 tweets de prueba se borraron: `novato` quedó en 0.
+- **Errores míos durante la sesión, corregidos antes de commitear:** un script de edición reemplazó
+  el título de `milestone-2.md` y, más tarde, otro duplicó el README porque `String.replace`
+  interpreta `$'` en el texto de reemplazo. En ambos casos se detectó revisando el diff, se
+  restauró (el título a mano; el README desde `HEAD`) y se rehizo con `Edit`.
+- **Pendiente:** `fullName` en la regla de `users` sigue usando `size()` (solo afecta a nombres con
+  emoji cerca de 50 caracteres). Falta decidir push y PR.
+- Verificación final: lint, `format:check`, build y 252 tests en verde.
+
+### Archivos creados o modificados
+
+- `firestore.rules`, `src/services/firebase/firestoreRules.test.js`, `CLAUDE.md`, `README.md`,
+  `docs/milestone-2.md`, `bitacora.md`

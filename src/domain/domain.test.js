@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_TWEET_LENGTH } from './constants';
+import { MAX_TWEET_LENGTH, PAGE_SIZE } from './constants';
 import { ErrorCode, ServiceError } from './errors';
 import { compareByFullName, compareByNewest } from './sorting';
 import { countCharacters, toSortKey } from './text';
@@ -8,6 +8,7 @@ import {
   normalizeUsername,
   validateEmail,
   validateFullName,
+  validatePageSize,
   validatePassword,
   validateTweetBody,
   validateUsername,
@@ -78,6 +79,14 @@ describe('validators', () => {
     expect(validateTweetBody('🚂'.repeat(MAX_TWEET_LENGTH))).toBeNull();
     // Surrounding whitespace doesn't count.
     expect(validateTweetBody(`  ${'x'.repeat(MAX_TWEET_LENGTH)}  `)).toBeNull();
+  });
+
+  it('accepts page sizes from 1 to PAGE_SIZE and nothing else', () => {
+    expect(validatePageSize(1)).toBeNull();
+    expect(validatePageSize(PAGE_SIZE)).toBeNull();
+    [0, -1, PAGE_SIZE + 1, 2.5, NaN, null, '10'].forEach((pageSize) => {
+      expect(validatePageSize(pageSize)).toBe(ErrorCode.INVALID_PAGE_SIZE);
+    });
   });
 });
 
