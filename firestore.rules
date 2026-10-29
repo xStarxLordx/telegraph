@@ -57,7 +57,9 @@ service cloud.firestore {
     }
 
     // tweets/{autoId} -> { authorId, authorFullName, authorUsername, body, createdAt }.
-    // Tweets are never edited or deleted.
+    // Tweets are never edited or deleted. The body length is counted in code points, like the app
+    // does (G-10): `size()` counts UTF-16 units, so an emoji would count twice. RE2's `.` matches
+    // one code point, and `(?s)` lets it match line breaks too.
     match /tweets/{tweetId} {
       allow read: if signedIn();
 
@@ -72,8 +74,7 @@ service cloud.firestore {
           request.resource.data.authorUsername,
           request.resource.data.authorFullName)
         && request.resource.data.body is string
-        && request.resource.data.body.size() >= 1
-        && request.resource.data.body.size() <= 280
+        && request.resource.data.body.matches('(?s)^.{1,280}$')
         && request.resource.data.createdAt == request.time;
 
       allow update, delete: if false;

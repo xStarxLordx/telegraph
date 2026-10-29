@@ -50,9 +50,13 @@ describe('firestore.rules', () => {
   });
 
   it('uses the same limits as src/domain/constants.js', () => {
-    expect(numberAfter(/body\.size\(\) <= (\d+)/)).toBe(MAX_TWEET_LENGTH);
+    expect(numberAfter(/body\.matches\('\(\?s\)\^\.\{1,(\d+)\}\$'\)/)).toBe(MAX_TWEET_LENGTH);
     expect(numberAfter(/fullName\.size\(\) <= (\d+)/)).toBe(FULL_NAME_MAX_LENGTH);
     expect(rules).toContain(`{${USERNAME_MIN_LENGTH},${USERNAME_MAX_LENGTH}}`);
+  });
+
+  it('counts a tweet in code points, like the app: size() would count an emoji twice', () => {
+    expect(blockOf('tweets')).not.toContain('body.size()');
   });
 
   it('never lets a tweet, a follow or a profile be edited or deleted', () => {
