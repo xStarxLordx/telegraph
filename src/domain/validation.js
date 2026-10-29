@@ -2,6 +2,7 @@
 import {
   FULL_NAME_MAX_LENGTH,
   MAX_TWEET_LENGTH,
+  PAGE_SIZE,
   PASSWORD_MIN_LENGTH,
   USERNAME_MAX_LENGTH,
   USERNAME_MIN_LENGTH,
@@ -57,4 +58,10 @@ export function validateTweetBody(body) {
   if (!value) return ErrorCode.TWEET_EMPTY;
   if (countCharacters(value) > MAX_TWEET_LENGTH) return ErrorCode.TWEET_TOO_LONG;
   return null;
+}
+
+/** A page holds a whole number of items, from 1 up to PAGE_SIZE (G-09). */
+export function validatePageSize(pageSize) {
+  const valid = Number.isInteger(pageSize) && pageSize >= 1 && pageSize <= PAGE_SIZE;
+  return valid ? null : ErrorCode.INVALID_PAGE_SIZE;
 }

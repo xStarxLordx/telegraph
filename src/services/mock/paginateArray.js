@@ -3,6 +3,7 @@
 // never shifts or repeats items on the following pages.
 import { PAGE_SIZE } from '../../domain/constants';
 import { ErrorCode, ServiceError } from '../../domain/errors';
+import { validatePageSize } from '../../domain/validation';
 
 /**
  * @template {{ id: string }} T
@@ -11,9 +12,8 @@ import { ErrorCode, ServiceError } from '../../domain/errors';
  * @returns {{ items: T[], nextCursor: string|null, total: number }}
  */
 export default function paginateArray(items, { cursor = null, pageSize = PAGE_SIZE } = {}) {
-  if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > PAGE_SIZE) {
-    throw new ServiceError(ErrorCode.INVALID_PAGE_SIZE);
-  }
+  const sizeError = validatePageSize(pageSize);
+  if (sizeError) throw new ServiceError(sizeError);
   let start = 0;
   if (cursor !== null) {
     const cursorIndex = items.findIndex((item) => item.id === cursor);
