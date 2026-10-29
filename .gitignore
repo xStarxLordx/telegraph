@@ -23,5 +23,9 @@ dist-ssr
 *.sln
 *.sw?
 
+# Firebase Admin SDK keys are secrets: keep them outside the repo (this is only a safety net)
+*-firebase-adminsdk-*.json
+service-account*.json
+
 # Course material (kept local, not versioned)
 Clon de X.pdf

@@ -62,5 +62,19 @@ export default [
       'import-x/no-extraneous-dependencies': ['error', { devDependencies: true }],
     },
   },
+  {
+    // Node scripts (`npm run seed`): run by `node` itself, so imports keep their file extension,
+    // they print to the console and may use dev dependencies.
+    name: 'telegraph/node-scripts',
+    files: ['scripts/**/*.{js,mjs}'],
+    languageOptions: {
+      globals: globals.node,
+    },
+    rules: {
+      'no-console': 'off',
+      'import-x/extensions': 'off',
+      'import-x/no-extraneous-dependencies': ['error', { devDependencies: true }],
+    },
+  },
   prettierConfig,
 ];
