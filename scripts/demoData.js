@@ -4,8 +4,8 @@
 //
 // Every document id is fixed, and every account uid starts with DEMO_UID_PREFIX, so seeding twice
 // changes nothing and cleaning can find exactly what was seeded.
-import { toSortKey } from '../src/domain/text.js';
-import { createSeedState, DEMO_PASSWORD } from '../src/services/mock/seed.js';
+import { toSortKey } from '../src/domain/text.ts';
+import { createSeedState, DEMO_PASSWORD } from '../src/services/mock/seed.ts';
 
 export { DEMO_PASSWORD };
 export const DEMO_UID_PREFIX = 'demo-';

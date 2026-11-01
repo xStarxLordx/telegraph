@@ -28,7 +28,7 @@ function ThemeProvider({ storage, rootElement, children }) {
 }
 
 ThemeProvider.propTypes = {
-  // Web Storage-like object (see src/utils/storage.js).
+  // Web Storage-like object (see src/utils/storage.ts).
   storage: PropTypes.shape({
     getItem: PropTypes.func.isRequired,
     setItem: PropTypes.func.isRequired,
