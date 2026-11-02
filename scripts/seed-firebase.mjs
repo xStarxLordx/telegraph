@@ -15,7 +15,7 @@ import { readFileSync } from 'node:fs';
 import { cert, initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
-import chunk from '../src/utils/chunk.js';
+import chunk from '../src/utils/chunk.ts';
 import { buildDemoDataset, buildFollowsOf, DEMO_PASSWORD, DEMO_UID_PREFIX } from './demoData.js';
 
 const IN_LIMIT = 30; // values Firestore accepts in one `in` filter

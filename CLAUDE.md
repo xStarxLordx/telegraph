@@ -1,6 +1,6 @@
 # Telegraph — X (Twitter) clone · class project
 
-React SPA (Vite, JavaScript, CSS Modules) + Firebase (Auth, Firestore). Individual project.
+React SPA (Vite, TypeScript + JSX, CSS Modules) + Firebase (Auth, Firestore). Individual project.
 Spec: `Clon de X.pdf` in this folder. If it disagrees with these docs, the PDF wins: fix the docs.
 
 ## Where the work is planned
@@ -51,7 +51,7 @@ graded. Commit it with the session's work, never in one final batch commit.
 
 - UI → hooks → **service contracts** (`authService`, `userService`, `tweetService`,
   `followService`) provided by `ServicesProvider`. Components never import Firebase or mock data.
-  The contracts live in `src/services/contracts.js`; `src/services/createAppServices.js` is the
+  The contracts live in `src/interfaces/services.ts`; `src/services/createAppServices.ts` is the
   only place that picks an implementation (Firebase for the app). The mocks stay for the tests.
 - Business rules (validation, limits, sort keys) are pure functions in `src/domain/`, shared by
   every implementation. Failures throw `ServiceError` with a `code`; the UI translates the
@@ -86,8 +86,8 @@ The tracking tables in `docs/` say which tasks are finished; this is only what t
   a client could claim several usernames directly. Both are accepted trade-offs, noted in the README.
 - **The rules, the indexes and the services must agree, and none of them can be tried without
   deploying.** `firestore.rules` duplicates the field lists and limits of the code
-  (`firestoreRules.test.js` fails when they drift), and every ordered query needs its composite
-  index in `firestore.indexes.json` (the test fake `src/test/fakeFirestore.js` rejects a query whose
+  (`firestoreRules.test.ts` fails when they drift), and every ordered query needs its composite
+  index in `firestore.indexes.json` (the test fake `src/test/fakeFirestore.ts` rejects a query whose
   index is missing). Changing a document's fields means changing the service, the rules and the
   README together.
 - **Deploy** with `npx firebase-tools deploy --only firestore:rules,firestore:indexes` (project

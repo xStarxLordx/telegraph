@@ -49,3 +49,14 @@
   font-size: 0.9375rem;
   color: var(--color-text-muted);
 }
+
+.feed {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.feedTitle {
+  margin: 0;
+  font-size: 1.125rem;
+}

@@ -1,6 +1,6 @@
 // ESLint flat config: Airbnb style guide (via eslint-config-airbnb-extended, the flat-config
-// port of the official rules) + React Refresh for Vite + Prettier last, so formatting rules
-// are owned by Prettier and never conflict with ESLint.
+// port of the official rules, with its TypeScript preset) + React Refresh for Vite + Prettier
+// last, so formatting rules are owned by Prettier and never conflict with ESLint.
 import js from '@eslint/js';
 import { configs, plugins } from 'eslint-config-airbnb-extended';
 import prettierConfig from 'eslint-config-prettier/flat';
@@ -11,6 +11,26 @@ import globals from 'globals';
 // Taken from the same eslint-plugin-react instance Airbnb registers, to avoid a duplicate plugin.
 const reactJsxRuntime = plugins.react.plugins.react.configs.flat['jsx-runtime'];
 
+const airbnb = [
+  ...configs.base.recommended,
+  ...configs.react.recommended,
+  ...configs.base.typescript,
+  ...configs.react.typescript,
+];
+const airbnbSetting = (name) => airbnb.find((config) => config.name === name);
+
+// Components stay in .jsx but import the .ts modules: they resolve imports the way .ts files do.
+const typescriptImports = airbnbSetting(
+  'airbnb/config/react-typescript-settings-extensions-configurations',
+);
+const typescriptExtensionsRule = airbnbSetting('airbnb/config/typescript/import-x').rules[
+  'import-x/extensions'
+];
+
+// Airbnb's own restricted syntax (for..in, labels…), extended below rather than replaced.
+const [, ...airbnbRestrictedSyntax] =
+  airbnbSetting('airbnb/config/style').rules['no-restricted-syntax'];
+
 export default [
   { ignores: ['dist/', 'node_modules/', 'coverage/'] },
   js.configs.recommended,
@@ -19,8 +39,8 @@ export default [
   plugins.react,
   plugins.reactA11y,
   plugins.reactHooks,
-  ...configs.base.recommended,
-  ...configs.react.recommended,
+  plugins.typescriptEslint,
+  ...airbnb,
   reactJsxRuntime,
   reactRefresh.configs.vite,
   {
@@ -43,17 +63,45 @@ export default [
     },
   },
   {
+    // So does the Vitest test of the Node scripts.
+    name: 'telegraph/jsx-imports-typescript',
+    files: ['**/*.jsx', 'scripts/**/*.test.js'],
+    settings: typescriptImports.settings,
+    rules: { 'import-x/extensions': typescriptExtensionsRule },
+  },
+  {
+    // Every interface and type alias lives in src/interfaces/, so the shapes the app shares
+    // are declared once and found in one place.
+    name: 'telegraph/interfaces-folder',
+    files: ['src/**/*.ts'],
+    ignores: ['src/interfaces/**', '**/*.test.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        ...airbnbRestrictedSyntax,
+        {
+          selector: 'TSInterfaceDeclaration',
+          message: 'Declare interfaces in src/interfaces/.',
+        },
+        {
+          selector: 'TSTypeAliasDeclaration',
+          message: 'Declare types in src/interfaces/.',
+        },
+      ],
+    },
+  },
+  {
     name: 'telegraph/browser-globals',
-    files: ['src/**/*.{js,jsx}'],
+    files: ['src/**/*.{ts,jsx}'],
     languageOptions: {
       globals: globals.browser,
     },
   },
   {
-    // Airbnb's dev-dependency globs cover *.test.js but not *.test.jsx (component tests) or
+    // Airbnb's dev-dependency globs cover *.test.ts but not *.test.jsx (component tests) or
     // the shared test helpers in src/test/.
     name: 'telegraph/tests',
-    files: ['**/*.test.{js,jsx}', 'src/test/**/*.{js,jsx}'],
+    files: ['**/*.test.{js,ts,jsx}', 'src/test/**/*.{ts,jsx}'],
     // Vitest runs in Node.
     languageOptions: {
       globals: globals.node,

@@ -91,6 +91,22 @@ describe('Following page (M1-14)', () => {
   });
 });
 
+describe('Home page', () => {
+  it('shows the feed below the shortcuts, 10 tweets per page, newest first', async () => {
+    renderApp('/', { services });
+    expect(await screen.findByRole('heading', { level: 2, name: 'Feed' })).toBeTruthy();
+    const feed = await screen.findByRole('feed', { name: 'Feed' });
+
+    const expected = await services.tweetService.listFeed(ada.id);
+    await waitFor(() => expect(within(feed).getAllByRole('article')).toHaveLength(10));
+    expect(within(feed).getAllByRole('article')[0].textContent).toContain(expected.items[0].body);
+    // Below the home options: the compose prompt comes first.
+    const prompt = screen.getByText('¿Qué quieres contarle al mundo hoy?');
+    const documentOrder = [...document.querySelectorAll('*')];
+    expect(documentOrder.indexOf(prompt)).toBeLessThan(documentOrder.indexOf(feed));
+  });
+});
+
 describe('Compose page (M1-13)', () => {
   it('publishes and shows the new tweet first in the feed', async () => {
     const user = userEvent.setup();

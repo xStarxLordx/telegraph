@@ -7,7 +7,7 @@ function ServicesProvider({ services, children }) {
 }
 
 ServicesProvider.propTypes = {
-  // Each service is an object of async methods (see contracts.js).
+  // Each service is an object of async methods (see src/interfaces/services.ts).
   services: PropTypes.shape({
     authService: PropTypes.objectOf(PropTypes.func).isRequired,
     userService: PropTypes.objectOf(PropTypes.func).isRequired,
