@@ -4,6 +4,7 @@ import { useCurrentUser } from '../auth/AuthContext';
 import { LinkButton } from '../components/Button/Button';
 import Card from '../components/Card/Card';
 import FeedList from '../components/FeedList/FeedList';
+import FollowByUsernameForm from '../components/FollowByUsernameForm/FollowByUsernameForm';
 import { FeedIcon, PenIcon, TweetsIcon } from '../components/icons/icons';
 import PageHeader from '../components/PageHeader/PageHeader';
 import { Paths, userPath } from '../routes/paths';
@@ -47,7 +48,7 @@ function HomePage() {
         </Link>
       </div>
 
-      {/* Slot reserved for "Follow by username" (M2-10). */}
+      <FollowByUsernameForm />
 
       <section className={styles.feed} aria-labelledby="home-feed-title">
         <h2 id="home-feed-title" className={styles.feedTitle}>

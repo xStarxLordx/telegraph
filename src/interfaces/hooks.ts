@@ -85,6 +85,10 @@ export interface RegisterValues {
   confirmPassword: string;
 }
 
+export interface FollowByUsernameValues {
+  username: string;
+}
+
 export interface ChooseUsernameValues {
   username: string;
 }

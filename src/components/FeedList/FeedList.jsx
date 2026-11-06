@@ -34,7 +34,7 @@ function FeedList() {
           title={t('feed.emptyTitle')}
           message={t('feed.emptyMessage')}
           action={
-            <LinkButton to={Paths.FOLLOWERS} variant={ButtonVariant.GHOST}>
+            <LinkButton to={Paths.SEARCH} variant={ButtonVariant.GHOST}>
               {t('feed.emptyAction')}
             </LinkButton>
           }

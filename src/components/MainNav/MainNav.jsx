@@ -9,6 +9,7 @@ import {
   FollowingIcon,
   HomeIcon,
   PenIcon,
+  SearchIcon,
   TweetsIcon,
 } from '../icons/icons';
 import styles from './MainNav.module.css';
@@ -24,6 +25,7 @@ function MainNav() {
   const links = [
     { to: Paths.HOME, label: t('nav.home'), Icon: HomeIcon, end: true },
     { to: Paths.FEED, label: t('nav.feed'), Icon: FeedIcon },
+    { to: Paths.SEARCH, label: t('nav.search'), Icon: SearchIcon },
     { to: userPath(user.username), label: t('nav.myTweets'), Icon: TweetsIcon },
     { to: Paths.FOLLOWING, label: t('nav.following'), Icon: FollowingIcon },
     { to: Paths.FOLLOWERS, label: t('nav.followers'), Icon: FollowersIcon },

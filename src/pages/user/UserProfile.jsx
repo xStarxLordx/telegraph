@@ -9,7 +9,7 @@ import usePageTitle from '../../hooks/usePageTitle';
 import { useFollowCounts, useIsFollowing } from '../../hooks/useFollowData';
 import useFollowUser from '../../hooks/useFollowUser';
 import useErrorMessage from '../../i18n/useErrorMessage';
-import { Paths } from '../../routes/paths';
+import { Paths, userFollowersPath, userFollowingPath } from '../../routes/paths';
 import styles from './UserProfile.module.css';
 
 /** Profile header: name, @username, counters and the Follow button (not on my own profile). */
@@ -36,13 +36,12 @@ function UserProfile({ user, isMe }) {
           <CounterGauge
             count={counts.followers}
             label={t('counters.followers')}
-            // Other users' lists arrive in M3-06.
-            to={isMe ? Paths.FOLLOWERS : ''}
+            to={isMe ? Paths.FOLLOWERS : userFollowersPath(user.username)}
           />
           <CounterGauge
             count={counts.following}
             label={t('counters.following')}
-            to={isMe ? Paths.FOLLOWING : ''}
+            to={isMe ? Paths.FOLLOWING : userFollowingPath(user.username)}
           />
         </div>
       )}

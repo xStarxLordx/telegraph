@@ -31,7 +31,8 @@
     "myTweets": "My tweets",
     "following": "Following",
     "followers": "Followers",
-    "tweet": "Tweet"
+    "tweet": "Tweet",
+    "search": "Search"
   },
   "fields": {
     "fullName": "Full name",
@@ -69,7 +70,7 @@
     "subtitle": "Your personal telegraph station.",
     "composePrompt": "What do you want to tell the world today?",
     "tweet": "Tweet",
-    "feedHint": "Your tweets and those of the people you follow.",
+    "feedHint": "Your tweets and those of people you follow first; then the latest from the network.",
     "myTweetsHint": "Everything you have published."
   },
   "compose": {
@@ -86,24 +87,32 @@
   },
   "feed": {
     "title": "Feed",
-    "subtitle": "Your tweets and those of the people you follow, newest first.",
-    "emptyTitle": "Your feed is empty",
-    "emptyMessage": "Publish your first tweet or follow someone to see their dispatches here.",
-    "emptyAction": "See my followers"
+    "subtitle": "Your tweets and those of people you follow first; then everyone else’s, newest first.",
+    "emptyTitle": "No tweets yet",
+    "emptyMessage": "Publish the first one or search for people to follow.",
+    "emptyAction": "Search people"
   },
   "following": {
     "title": "Following",
     "subtitle_one": "You follow {{count}} person, in alphabetical order.",
     "subtitle_other": "You follow {{count}} people, in alphabetical order.",
     "emptyTitle": "You don't follow anyone yet",
-    "emptyMessage": "Start by following your followers back."
+    "emptyMessage": "Search for people and start following them.",
+    "titleOf": "Followed by {{name}}",
+    "subtitleOf_one": "@{{username}} follows {{count}} person, in alphabetical order.",
+    "subtitleOf_other": "@{{username}} follows {{count}} people, in alphabetical order.",
+    "emptyTitleOf": "@{{username}} doesn’t follow anyone yet"
   },
   "followers": {
     "title": "Followers",
     "subtitle_one": "{{count}} person follows you, in alphabetical order.",
     "subtitle_other": "{{count}} people follow you, in alphabetical order.",
     "emptyTitle": "No followers yet",
-    "emptyMessage": "Publish your first dispatches so people can find you."
+    "emptyMessage": "Publish your first dispatches so people can find you.",
+    "titleOf": "Followers of {{name}}",
+    "subtitleOf_one": "{{count}} person follows @{{username}}, in alphabetical order.",
+    "subtitleOf_other": "{{count}} people follow @{{username}}, in alphabetical order.",
+    "emptyTitleOf": "@{{username}} has no followers yet"
   },
   "follow": {
     "follow": "Follow",
@@ -123,7 +132,8 @@
     "noTweets": "@{{username}} hasn't published anything yet",
     "notFoundTitle": "User not found",
     "notFoundMessage": "There is no account with the username @{{username}}.",
-    "tweets": "Tweets"
+    "tweets": "Tweets",
+    "viewProfile": "View profile"
   },
   "pagination": {
     "label": "Pagination",
@@ -163,5 +173,29 @@
     "validation/tweet-empty": "The tweet can't be empty.",
     "validation/tweet-too-long": "The tweet can be at most {{tweetMax}} characters long.",
     "validation/passwords-mismatch": "The passwords don't match."
+  },
+  "followByUsername": {
+    "title": "Follow by username",
+    "placeholder": "ada",
+    "searchLink": "Don’t know the username? Search for people."
+  },
+  "search": {
+    "title": "Search people",
+    "hint": "Find people to follow by their name or username.",
+    "label": "Name or username",
+    "placeholder": "Ada Lovelace or @ada",
+    "submit": "Search",
+    "results": "Search results",
+    "subtitle_one": "{{count}} result for “{{term}}”, in alphabetical order.",
+    "subtitle_other": "{{count}} results for “{{term}}”, in alphabetical order.",
+    "promptTitle": "Look someone up",
+    "promptMessage": "Type part of a name or username to see who matches.",
+    "noResultsTitle": "Nobody matches “{{term}}”",
+    "noResultsMessage": "Try another name or username, or fewer letters.",
+    "recommended": "People you may want to follow",
+    "matches": "Matches",
+    "noSuggestions": "Nobody matches yet.",
+    "suggestionsCount_one": "{{count}} suggestion available.",
+    "suggestionsCount_other": "{{count}} suggestions available."
   }
 }
