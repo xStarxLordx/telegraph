@@ -10,6 +10,7 @@ import type {
 } from 'firebase/firestore';
 import type { ErrorCodeValue } from './errors';
 import type { PageRequest } from './pagination';
+import type { User } from './user';
 
 /** What every Firebase service is built from. */
 export interface FirebaseServiceDeps {
@@ -56,6 +57,11 @@ export interface FollowListFields {
   personFullName: 'followeeFullName' | 'followerFullName';
   personUsername: 'followeeUsername' | 'followerUsername';
   sortKey: 'followeeFullNameLower' | 'followerFullNameLower';
+}
+
+export interface UserDirectory {
+  loadedAt: number;
+  users: Promise<User[]>;
 }
 
 /** What a Firebase error code becomes. */

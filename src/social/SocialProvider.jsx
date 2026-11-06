@@ -21,7 +21,20 @@ function SocialProvider({ children }) {
     [followService, userId],
   );
 
-  const value = useMemo(() => ({ followVersion, follow }), [followVersion, follow]);
+  const followByUsername = useCallback(
+    async (username) => {
+      if (!userId) throw new ServiceError(ErrorCode.NOT_AUTHENTICATED);
+      const followee = await followService.followByUsername(userId, username);
+      setFollowVersion((version) => version + 1);
+      return followee;
+    },
+    [followService, userId],
+  );
+
+  const value = useMemo(
+    () => ({ followVersion, follow, followByUsername }),
+    [followVersion, follow, followByUsername],
+  );
 
   return <SocialContext.Provider value={value}>{children}</SocialContext.Provider>;
 }

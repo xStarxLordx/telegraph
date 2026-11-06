@@ -6,6 +6,5 @@ export interface TweetService {
   publish(input: PublishTweetInput): Promise<Tweet>;
   /** Newest first. */
   listByAuthor(authorId: string, page?: PageRequest): Promise<Page<Tweet>>;
-  /** The user's tweets plus those of everyone they follow, newest first. */
   listFeed(userId: string, page?: PageRequest): Promise<Page<Tweet>>;
 }

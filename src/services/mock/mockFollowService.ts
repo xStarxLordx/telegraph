@@ -5,7 +5,7 @@ import type { FollowService } from '../../interfaces/followService';
 import type { MockServiceDeps, UserRecord } from '../../interfaces/mock';
 import type { PageRequest } from '../../interfaces/pagination';
 import { toPublicUser } from './mappers';
-import paginateArray from './paginateArray';
+import paginateArray from '../paginateArray';
 import requireActor from './requireActor';
 
 const followId = (followerId: string, followeeId: string) => `${followerId}_${followeeId}`;

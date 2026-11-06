@@ -6,10 +6,10 @@ import LoginPage from '../pages/auth/LoginPage';
 import RegisterPage from '../pages/auth/RegisterPage';
 import ComposePage from '../pages/ComposePage';
 import FeedPage from '../pages/FeedPage';
-import FollowersPage from '../pages/FollowersPage';
-import FollowingPage from '../pages/FollowingPage';
+import FollowListPage from '../pages/FollowListPage';
 import HomePage from '../pages/HomePage';
 import NotFoundPage from '../pages/NotFoundPage';
+import SearchPage from '../pages/SearchPage';
 import UserPage from '../pages/UserPage';
 import { PublicOnly, RequireAuth, RequireMissingUsername } from './guards';
 import { Paths } from './paths';
@@ -34,9 +34,12 @@ function AppRoutes() {
           <Route path={Paths.HOME} element={<HomePage />} />
           <Route path={Paths.COMPOSE} element={<ComposePage />} />
           <Route path={Paths.FEED} element={<FeedPage />} />
-          <Route path={Paths.FOLLOWING} element={<FollowingPage />} />
-          <Route path={Paths.FOLLOWERS} element={<FollowersPage />} />
+          <Route path={Paths.FOLLOWING} element={<FollowListPage kind="following" />} />
+          <Route path={Paths.FOLLOWERS} element={<FollowListPage kind="followers" />} />
+          <Route path={Paths.SEARCH} element={<SearchPage />} />
           <Route path={Paths.USER} element={<UserPage />} />
+          <Route path={Paths.USER_FOLLOWING} element={<FollowListPage kind="following" />} />
+          <Route path={Paths.USER_FOLLOWERS} element={<FollowListPage kind="followers" />} />
         </Route>
       </Route>
     </Routes>

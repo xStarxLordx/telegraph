@@ -5,7 +5,7 @@ import { PAGE_SIZE } from '../domain/constants';
 import { ErrorCode, ServiceError } from '../domain/errors';
 import type { PageFetcher, PaginatedList } from '../interfaces/hooks';
 import type { Identifiable, Page, PageRequest } from '../interfaces/pagination';
-import paginateArray from '../services/mock/paginateArray';
+import paginateArray from '../services/paginateArray';
 import usePaginatedList from './usePaginatedList';
 
 /** A fetchPage over an in-memory array, with the same cursor semantics as the services. */

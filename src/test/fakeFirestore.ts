@@ -112,6 +112,7 @@ function compareStrings(a: string, b: string) {
 }
 
 function compareValues(a: unknown, b: unknown) {
+  if (a instanceof Date && b instanceof Date) return Math.sign(a.getTime() - b.getTime());
   if (a instanceof Timestamp && b instanceof Timestamp) {
     return Math.sign(a.seconds - b.seconds) || Math.sign(a.nanoseconds - b.nanoseconds);
   }

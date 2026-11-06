@@ -38,6 +38,12 @@ async function followAs(followerId: string, followeeId: string) {
   await followService.follow(followerId, followeeId);
 }
 
+const inSequence = (count: number, step: (index: number) => Promise<unknown>) =>
+  Array.from({ length: count }).reduce<Promise<unknown>>(
+    (chain, _, index) => chain.then(() => step(index)),
+    Promise.resolve(),
+  );
+
 const bodiesOf = (page: Page<Tweet>) => page.items.map((tweet) => tweet.body);
 
 beforeEach(() => {
@@ -189,7 +195,7 @@ describe('listByAuthor', () => {
 });
 
 describe('listFeed', () => {
-  it('shows my tweets and those of the people I follow, not anyone else’s', async () => {
+  it('puts my tweets and those of the people I follow first, then everyone else’s', async () => {
     addAccount({ uid: 'uid-babbage', username: 'babbage', fullName: 'Charles Babbage' });
     addAccount({ uid: 'uid-tesla', username: 'tesla', fullName: 'Nikola Tesla' });
     await followAs(ADA.uid, 'uid-babbage');
@@ -199,12 +205,64 @@ describe('listFeed', () => {
 
     const feed = await tweetService.listFeed(ADA.uid);
 
-    expect(bodiesOf(feed)).toEqual(['followed', 'mine']);
-    expect(feed).toMatchObject({ nextCursor: null, total: 2 });
+    expect(bodiesOf(feed)).toEqual(['followed', 'mine', 'stranger']);
+    expect(feed).toMatchObject({ nextCursor: null, total: 3 });
+  });
+
+  it('shows other people’s tweets to someone who follows nobody', async () => {
+    addAccount({ uid: 'uid-tesla', username: 'tesla', fullName: 'Nikola Tesla' });
+    await publishAs('uid-tesla', 'older', 1);
+    await publishAs('uid-tesla', 'newer', 2);
+
+    const feed = await tweetService.listFeed(ADA.uid);
+
+    expect(bodiesOf(feed)).toEqual(['newer', 'older']);
   });
 
   it('is empty for someone with no tweets and no follows', async () => {
     expect(await tweetService.listFeed(ADA.uid)).toEqual({ items: [], nextCursor: null, total: 0 });
+  });
+
+  describe('when there are more tweets than a page holds', () => {
+    beforeEach(async () => {
+      addAccount({ uid: 'uid-babbage', username: 'babbage', fullName: 'Charles Babbage' });
+      addAccount({ uid: 'uid-tesla', username: 'tesla', fullName: 'Nikola Tesla' });
+      await followAs(ADA.uid, 'uid-babbage');
+      await inSequence(6, (i) => publishAs('uid-babbage', `followed ${i}`, 100 + i));
+      await inSequence(14, (i) => publishAs('uid-tesla', `stranger ${i}`, 200 + i));
+    });
+
+    it('fills the page with strangers once the people I follow run out', async () => {
+      const pages = await collectPages((page) => tweetService.listFeed(ADA.uid, page));
+
+      expect(pages.map((page) => page.items.length)).toEqual([10, 10]);
+      expect(pages.map((page) => page.total)).toEqual([20, 20]);
+      const bodies = pages.flatMap(bodiesOf);
+      expect(bodies.slice(0, 6)).toEqual([5, 4, 3, 2, 1, 0].map((index) => `followed ${index}`));
+      expect(bodies.slice(6, 8)).toEqual(['stranger 13', 'stranger 12']);
+      expect(new Set(bodies).size).toBe(20);
+    });
+
+    it('keeps the strangers’ pages stable when a followed person tweets in between', async () => {
+      const first = await tweetService.listFeed(ADA.uid);
+      const secondBefore = await tweetService.listFeed(ADA.uid, { cursor: first.nextCursor });
+      await publishAs('uid-babbage', 'late arrival', 300);
+
+      const secondAfter = await tweetService.listFeed(ADA.uid, { cursor: first.nextCursor });
+
+      expect(bodiesOf(secondAfter)).toEqual(bodiesOf(secondBefore));
+    });
+  });
+
+  it('finds the strangers’ tweets behind a long run of tweets from the people I follow', async () => {
+    addAccount({ uid: 'uid-tesla', username: 'tesla', fullName: 'Nikola Tesla' });
+    await inSequence(3, (i) => publishAs('uid-tesla', `stranger ${i}`, 1 + i));
+    await inSequence(60, (i) => publishAs(ADA.uid, `mine ${i}`, 100 + i));
+
+    const pages = await collectPages((page) => tweetService.listFeed(ADA.uid, page));
+
+    expect(pages.map((page) => page.items.length)).toEqual([10, 10, 10, 10, 10, 10, 3]);
+    expect(bodiesOf(pages[6])).toEqual(['stranger 2', 'stranger 1', 'stranger 0']);
   });
 
   describe('when I follow more than 30 people', () => {

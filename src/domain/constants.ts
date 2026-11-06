@@ -6,6 +6,12 @@ export const PAGE_SIZE = 10;
 /** Max tweet length in Unicode code points (G-10). */
 export const MAX_TWEET_LENGTH = 280;
 
+export const SUGGESTION_COUNT = 5;
+export const SUGGESTION_POOL = 30;
+export const SUGGESTION_DELAY_MS = 200;
+export const DIRECTORY_LIMIT = 1000;
+export const DIRECTORY_TTL_MS = 60_000;
+
 export const USERNAME_MIN_LENGTH = 3;
 export const USERNAME_MAX_LENGTH = 15;
 export const FULL_NAME_MAX_LENGTH = 50;
