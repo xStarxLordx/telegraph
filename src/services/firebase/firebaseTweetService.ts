@@ -14,10 +14,11 @@ import {
   startAfter,
   where,
   type DocumentSnapshot,
+  type QueryDocumentSnapshot,
 } from 'firebase/firestore';
 import { ServiceError } from '../../domain/errors';
 import { validateTweetBody } from '../../domain/validation';
-import type { FirebaseServiceDeps, TweetDocument } from '../../interfaces/firebase';
+import type { FirebaseServiceDeps, FollowDocument, TweetDocument } from '../../interfaces/firebase';
 import type { PageRequest } from '../../interfaces/pagination';
 import type { Tweet } from '../../interfaces/tweet';
 import type { TweetService } from '../../interfaces/tweetService';
@@ -54,18 +55,71 @@ function compareNewest(a: DocumentSnapshot, b: DocumentSnapshot) {
   return a.id < b.id ? 1 : -1;
 }
 
+const OTHERS_BATCH_SIZE = 50;
+
 export default function createFirebaseTweetService({
   auth,
   db,
 }: FirebaseServiceDeps): TweetService {
   const tweets = () => collection(db, Collection.TWEETS);
 
-  /** Everyone whose tweets make up the user's feed: the user and the accounts they follow. */
   const listAuthorIds = async (userId: string) => {
     const result = await getDocs(
       query(collection(db, Collection.FOLLOWS), where('followerId', '==', userId)),
     );
-    return [userId, ...result.docs.map((snapshot) => snapshot.data().followeeId as string)];
+    return [
+      userId,
+      ...result.docs.map((snapshot) => (snapshot.data() as FollowDocument).followeeId),
+    ];
+  };
+
+  const listFromAuthors = async (
+    authorIds: string[],
+    after: DocumentSnapshot | null,
+    wanted: number,
+  ) => {
+    const results = await Promise.all(
+      chunk(authorIds, MAX_IN_VALUES).map((ids) =>
+        getDocs(
+          query(
+            tweets(),
+            where('authorId', 'in', ids),
+            orderBy('createdAt', 'desc'),
+            ...(after ? [startAfter(after)] : []),
+            limit(wanted),
+          ),
+        ),
+      ),
+    );
+    return results
+      .flatMap(({ docs }) => docs)
+      .sort(compareNewest)
+      .slice(0, wanted);
+  };
+
+  const listFromOthers = async (
+    priority: Set<string>,
+    after: DocumentSnapshot | null,
+    wanted: number,
+  ): Promise<QueryDocumentSnapshot[]> => {
+    const batch = await getDocs(
+      query(
+        tweets(),
+        orderBy('createdAt', 'desc'),
+        ...(after ? [startAfter(after)] : []),
+        limit(OTHERS_BATCH_SIZE),
+      ),
+    );
+    const found = batch.docs.filter((snapshot) => !priority.has(readData(snapshot).authorId));
+    if (found.length >= wanted || batch.docs.length < OTHERS_BATCH_SIZE) {
+      return found.slice(0, wanted);
+    }
+    const rest = await listFromOthers(
+      priority,
+      batch.docs[batch.docs.length - 1],
+      wanted - found.length,
+    );
+    return [...found, ...rest];
   };
 
   return {
@@ -94,38 +148,24 @@ export default function createFirebaseTweetService({
       }),
     ),
 
-    // Firestore allows 30 values per `in`, so the authors are split into chunks of 30 and every
-    // chunk is queried on its own. All chunks share one ordering (newest first), so a single
-    // cursor serves them all: the last tweet shown. Whatever a chunk didn't return for this page
-    // comes after that tweet, so every chunk simply continues after it.
     listFeed: withMappedErrors(async (userId: string, page: PageRequest = {}) => {
       const size = resolvePageSize(page.pageSize);
       const after = await readCursor(db, Collection.TWEETS, page.cursor);
-      const chunks = chunk(await listAuthorIds(userId), MAX_IN_VALUES);
-      const byChunk = (ids: string[]) => where('authorId', 'in', ids);
-      const [results, counts] = await Promise.all([
-        Promise.all(
-          chunks.map((ids) =>
-            getDocs(
-              query(
-                tweets(),
-                byChunk(ids),
-                orderBy('createdAt', 'desc'),
-                ...(after ? [startAfter(after)] : []),
-                limit(size + 1),
-              ),
-            ),
-          ),
-        ),
-        Promise.all(chunks.map((ids) => getCountFromServer(query(tweets(), byChunk(ids))))),
-      ]);
-      // Each chunk gives up to size + 1, so more than `size` here means another page exists.
-      const newest = results.flatMap(({ docs }) => docs).sort(compareNewest);
-      const shown = newest.slice(0, size);
+      const authorIds = await listAuthorIds(userId);
+      const priority = new Set(authorIds);
+      const inOthers = after !== null && !priority.has(readData(after).authorId);
+      const fromPriority = inOthers ? [] : await listFromAuthors(authorIds, after, size + 1);
+      const fromOthers =
+        fromPriority.length > size
+          ? []
+          : await listFromOthers(priority, inOthers ? after : null, size + 1 - fromPriority.length);
+      const collected = [...fromPriority, ...fromOthers];
+      const shown = collected.slice(0, size);
+      const total = await getCountFromServer(query(tweets()));
       return {
         items: shown.map(toTweet),
-        nextCursor: newest.length > size ? shown[size - 1].id : null,
-        total: counts.reduce((sum, count) => sum + count.data().count, 0),
+        nextCursor: collected.length > size ? shown[size - 1].id : null,
+        total: total.data().count,
       };
     }),
   };

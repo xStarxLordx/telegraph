@@ -1,10 +1,10 @@
 // Cursor pagination over an already sorted array, with Firestore `startAfter` semantics:
 // the cursor is the id of the last item already shown, so inserting a new item at the top
 // never shifts or repeats items on the following pages.
-import { PAGE_SIZE } from '../../domain/constants';
-import { ErrorCode, ServiceError } from '../../domain/errors';
-import { validatePageSize } from '../../domain/validation';
-import type { Identifiable, Page, PageRequest } from '../../interfaces/pagination';
+import { PAGE_SIZE } from '../domain/constants';
+import { ErrorCode, ServiceError } from '../domain/errors';
+import { validatePageSize } from '../domain/validation';
+import type { Identifiable, Page, PageRequest } from '../interfaces/pagination';
 
 /** One page of `items`, which must already be sorted. */
 export default function paginateArray<T extends Identifiable>(

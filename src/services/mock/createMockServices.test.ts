@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { PAGE_SIZE } from '../../domain/constants';
+import { PAGE_SIZE, SUGGESTION_POOL } from '../../domain/constants';
 import type { UsernameLoginInput } from '../../interfaces/authService';
 import type { ErrorCodeValue } from '../../interfaces/errors';
 import type { MockServices } from '../../interfaces/mock';
@@ -331,6 +331,65 @@ describe('mock services', () => {
       expect(await services.userService.isUsernameAvailable('free_name')).toBe(true);
     });
 
+    it('searches by username or by the start of any word of the name, alphabetical by name', async () => {
+      const usernames = async (term: string) =>
+        (await services.userService.search(term)).items.map((user) => user.username);
+      expect(await usernames('@M')).toEqual([
+        'maxwell',
+        'lmeitner',
+        'mcurie',
+        'mshelley',
+        'somerville',
+        'faraday',
+      ]);
+      expect(await usernames('lovel')).toEqual(['ada']);
+      expect(await usernames('ÁNGELA')).toEqual(['aruizrobles']);
+      expect(await usernames('mary s')).toEqual(['mshelley', 'somerville']);
+      expect(await usernames('TESLA')).toEqual(['tesla']);
+    });
+
+    it('pages search results with a cursor', async () => {
+      const first = await services.userService.search('m', { pageSize: 4 });
+      const second = await services.userService.search('m', {
+        pageSize: 4,
+        cursor: first.nextCursor,
+      });
+      expect(first.items.map((user) => user.username)).toEqual([
+        'maxwell',
+        'lmeitner',
+        'mcurie',
+        'mshelley',
+      ]);
+      expect(second.items.map((user) => user.username)).toEqual(['somerville', 'faraday']);
+      expect(second.nextCursor).toBeNull();
+      expect(second.total).toBe(6);
+    });
+
+    it('returns nothing for an empty, unknown or malformed search', async () => {
+      const empty = { items: [], nextCursor: null, total: 0 };
+      expect(await services.userService.search('')).toEqual(empty);
+      expect(await services.userService.search('zzzz')).toEqual(empty);
+      expect(await services.userService.search('a/b')).toEqual(empty);
+      expect(await services.userService.search('   ')).toEqual(empty);
+    });
+
+    it('suggests the newest accounts as public profiles', async () => {
+      await services.authService.register({
+        fullName: 'New Comer',
+        username: 'newcomer',
+        email: 'newcomer@telegraph.test',
+        password: DEMO_PASSWORD,
+      });
+      const suggestions = await services.userService.suggest();
+      expect(suggestions[0]).toEqual({
+        id: expect.any(String),
+        fullName: 'New Comer',
+        username: 'newcomer',
+      });
+      expect(suggestions.length).toBeLessThanOrEqual(SUGGESTION_POOL);
+      expect(new Set(suggestions.map((user) => user.id)).size).toBe(suggestions.length);
+    });
+
     it('returns copies, so callers cannot change stored data', async () => {
       const user = (await services.userService.getUserByUsername('tesla')) as User;
       user.fullName = 'Changed';
@@ -381,23 +440,36 @@ describe('mock services', () => {
       expect(times).toEqual([...times].sort((a, b) => b - a));
     });
 
-    it('builds the feed from exactly the user and the people they follow, newest first', async () => {
-      // Expected result computed straight from the seed, without the services.
+    it('lists the user and the people they follow first, then everyone else, newest first', async () => {
       const seed = createSeedState();
-      const authors = new Set([
+      const priority = new Set([
         ada.id,
         ...seed.follows.filter((f) => f.followerId === ada.id).map((f) => f.followeeId),
       ]);
-      const expectedIds = seed.tweets
-        .filter((t) => authors.has(t.authorId))
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-        .map((t) => t.id);
+      const newest = [...seed.tweets].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      const expectedIds = [
+        ...newest.filter((t) => priority.has(t.authorId)),
+        ...newest.filter((t) => !priority.has(t.authorId)),
+      ].map((t) => t.id);
+      expect(newest.some((t) => !priority.has(t.authorId))).toBe(true);
 
       const { items, pages } = await collectAllPages((page) =>
         services.tweetService.listFeed(ada.id, page),
       );
       expect(pages).toBeGreaterThanOrEqual(2);
       expect(items.map((t) => t.id)).toEqual(expectedIds);
+    });
+
+    it('shows other people’s tweets to a user who follows nobody', async () => {
+      const newcomer = await services.authService.register({
+        fullName: 'New Comer',
+        username: 'newcomer',
+        email: 'newcomer@telegraph.test',
+        password: DEMO_PASSWORD,
+      });
+      const feed = await services.tweetService.listFeed(newcomer.id);
+      expect(feed.items).toHaveLength(PAGE_SIZE);
+      expect(feed.total).toBe(createSeedState().tweets.length);
     });
 
     it('does not repeat items on the next page after a new tweet is published', async () => {

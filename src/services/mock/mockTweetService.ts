@@ -1,4 +1,3 @@
-// Mock TweetService (see src/interfaces/tweetService.ts).
 import { ServiceError } from '../../domain/errors';
 import { compareByNewest } from '../../domain/sorting';
 import { validateTweetBody } from '../../domain/validation';
@@ -6,14 +5,11 @@ import type { MockServiceDeps, TweetRecord } from '../../interfaces/mock';
 import type { PageRequest } from '../../interfaces/pagination';
 import type { TweetService } from '../../interfaces/tweetService';
 import { toTweet } from './mappers';
-import paginateArray from './paginateArray';
+import paginateArray from '../paginateArray';
 import requireActor from './requireActor';
 
 export default function createMockTweetService({ db, delay, now }: MockServiceDeps): TweetService {
-  const listNewestFirst = (authorIds: Set<string>, page?: PageRequest) => {
-    const tweets = db.state.tweets
-      .filter((tweet) => authorIds.has(tweet.authorId))
-      .sort(compareByNewest);
+  const toTweetPage = (tweets: TweetRecord[], page?: PageRequest) => {
     const result = paginateArray(tweets, page);
     return { ...result, items: result.items.map(toTweet) };
   };
@@ -38,15 +34,28 @@ export default function createMockTweetService({ db, delay, now }: MockServiceDe
 
     async listByAuthor(authorId, page) {
       await delay();
-      return listNewestFirst(new Set([authorId]), page);
+      const tweets = db.state.tweets
+        .filter((tweet) => tweet.authorId === authorId)
+        .sort(compareByNewest);
+      return toTweetPage(tweets, page);
     },
 
     async listFeed(userId, page) {
       await delay();
-      const followeeIds = db.state.follows
-        .filter((follow) => follow.followerId === userId)
-        .map((follow) => follow.followeeId);
-      return listNewestFirst(new Set([userId, ...followeeIds]), page);
+      const priority = new Set([
+        userId,
+        ...db.state.follows
+          .filter((follow) => follow.followerId === userId)
+          .map((follow) => follow.followeeId),
+      ]);
+      const newest = [...db.state.tweets].sort(compareByNewest);
+      return toTweetPage(
+        [
+          ...newest.filter((tweet) => priority.has(tweet.authorId)),
+          ...newest.filter((tweet) => !priority.has(tweet.authorId)),
+        ],
+        page,
+      );
     },
   };
 }

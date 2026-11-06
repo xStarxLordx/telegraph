@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ErrorCode } from '../../domain/errors';
-import type { Identifiable, Page } from '../../interfaces/pagination';
+import { ErrorCode } from '../domain/errors';
+import type { Identifiable, Page } from '../interfaces/pagination';
 import paginateArray from './paginateArray';
 
 const items = (n: number) => Array.from({ length: n }, (_, i) => ({ id: `i${i}` }));
