@@ -90,7 +90,11 @@
     "subtitle": "Your tweets and those of people you follow first; then everyone else’s, newest first.",
     "emptyTitle": "No tweets yet",
     "emptyMessage": "Publish the first one or search for people to follow.",
-    "emptyAction": "Search people"
+    "emptyAction": "Search people",
+    "loadMore": "Load more",
+    "progress": "Showing {{shown}} of {{total}} tweets",
+    "end_one": "You have reached the end: {{count}} tweet.",
+    "end_other": "You have reached the end: {{count}} tweets."
   },
   "following": {
     "title": "Following",
