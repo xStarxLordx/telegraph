@@ -132,7 +132,7 @@ both languages.
 ### M1-09 · Pagination hook and tests
 
 **Description:** Services return cursor pages (`{ items, nextCursor, total }`, see
-`src/services/contracts.js`). Build a reusable `usePaginatedList(fetchPage)` hook that keeps a
+`src/interfaces/pagination.ts`). Build a reusable `usePaginatedList(fetchPage)` hook that keeps a
 stack of cursors and exposes `{ items, page, totalPages, hasNext, hasPrev, next, prev, loading,
 error, reload }` with `PAGE_SIZE = 10`, so every list page and the `Pagination` component share
 it. Test it (Vitest was set up in M1-03): empty list, exactly 10, 11, going forward and back,

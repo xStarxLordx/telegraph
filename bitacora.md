@@ -515,3 +515,51 @@ No se editan ni se borran entradas anteriores.
 
 - `firestore.rules`, `src/services/firebase/firestoreRules.test.js`, `CLAUDE.md`, `README.md`,
   `docs/milestone-2.md`, `bitacora.md`
+
+---
+
+## 2026-11-06 14:14 (UTC-5) — Revisión previa a la entrega: documentación, typos y pruebas
+
+- **Herramienta:** Claude Code (CLI)
+- **Modelo:** Claude Sonnet 5.5 (`claude-sonnet-5-5`)
+
+### Mensaje del estudiante (textual)
+
+> acabo de terminar de hacer las ultimas tareas que tenia pendientes para entregar el proyecto, revisa lo que hice para que actualices el claude.md, el readme y me ayudes a hacer testing para ver que no se me hayan escapados errores o typos
+
+### Resumen de la respuesta
+
+- **Verificación** (rama `feature/feed-lazy-loading`, árbol limpio): `npm run lint`, `typecheck`,
+  `format:check` y `build` pasan; 316 tests en verde, repetidos 3 veces sin fallos intermitentes.
+- **Typos y consistencia:** corrector ortográfico sobre README, CLAUDE.md, docs, código y
+  `en.json`; revisión manual de `es.json` y de los tweets de demo (el diccionario en español del
+  corrector no cargó, así que el español se leyó a ojo). Cruce de claves i18n usadas y definidas
+  (sin faltantes), búsqueda de copy hard-codeado, colores fuera de `tokens.css` y secretos
+  versionados (sin hallazgos). Corregido: apóstrofes curvos mezclados con rectos en tres textos de
+  `en.json`, «initialisation» en un comentario y el encabezado de `firestore.rules`, que citaba
+  `constants.js` y `firestoreRules.test.js` (ahora `.ts`; solo cambió un comentario, no hace falta
+  desplegar).
+- **README:** stack con TypeScript, tabla de rutas (`/search`, listas de cualquier usuario, home con
+  formulario y feed), rutas de archivos obsoletas (`.js` → `.ts`, `contracts.js` → `src/interfaces/`),
+  sección del feed (dos fases, un cursor, scroll infinito con «Cargar más»), búsqueda en el cliente
+  con sus límites (1000 perfiles, caché de 1 min, emails que llegan al navegador), script
+  `typecheck`, árbol de `src/` y sección de pruebas.
+- **CLAUDE.md:** convención `.ts`/`.jsx` y `typecheck`, regla G-09 con el feed por scroll, feed que
+  incluye a toda la red (desviación de R1.8, con cómo revertirla), búsqueda en el cliente, trampa
+  del feed en dos fases y de `IntersectionObserver` en jsdom, y `followByUsername` en la regla de
+  `useSocial`. Referencias obsoletas corregidas también en los tres `docs/milestone-*.md` (sin tocar
+  las tablas de seguimiento).
+- **Sin corregir; decisión del estudiante:** (1) el feed muestra a toda la red, aunque R1.8 y el
+  «Done when» de M2-12 hablan de «yo y quienes sigo»; (2) las tablas de seguimiento de M3 y los
+  pendientes de M1/M2 siguen sin marcar porque no se verificaron en el navegador contra Firebase;
+  (3) `bitacora.md` no tiene entradas de las sesiones del 29/10, 1/11 y 6/11 (G-11); (4) la rama
+  no incluye el merge del PR #9 que ya está en `origin/develop`; (5) `aria-controls` del combobox
+  apunta a un `id` que no existe cuando no hay sugerencias, y `isUsernameAvailable` del mock no
+  valida el formato como sí hace el de Firebase (ambos menores).
+- No se hizo commit, push ni PR.
+
+### Archivos creados o modificados
+
+- Modificados: `README.md`, `CLAUDE.md`, `docs/milestone-1.md`, `docs/milestone-2.md`,
+  `docs/milestone-3.md`, `firestore.rules` (comentario), `src/domain/constants.ts` (comentarios),
+  `src/i18n/locales/en.json`, `src/services/firebase/firebaseApp.ts` (comentario), `bitacora.md`

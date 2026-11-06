@@ -11,24 +11,31 @@ The UI has two themes: **Brass & Soot**, a dark steampunk retro theme (the defau
 
 The app has these pages:
 
-| Route              | Page                                                                         |
-| ------------------ | ---------------------------------------------------------------------------- |
-| `/login`           | Log in with username and password, or with Google                            |
-| `/register`        | Create an account (full name, username, email, password)                     |
-| `/choose-username` | First Google login: pick a username before entering the app                  |
-| `/`                | Home: welcome and the "Tweet" link; followers / following gauges on the side |
-| `/compose`         | Write a tweet with a live `n / 280` counter and publish it                   |
-| `/feed`            | My tweets and those of the people I follow, newest first                     |
-| `/following`       | People I follow, alphabetical by full name                                   |
-| `/followers`       | My followers, alphabetical, with "Follow" for those I don't follow back      |
-| `/users/:username` | A user's tweets, counters and a "Follow" button                              |
+| Route                        | Page                                                                                        |
+| ---------------------------- | ------------------------------------------------------------------------------------------- |
+| `/login`                     | Log in with username and password, or with Google                                           |
+| `/register`                  | Create an account (full name, username, email, password)                                    |
+| `/choose-username`           | First Google login: pick a username before entering the app                                 |
+| `/`                          | Home: welcome, the "Tweet" link, a follow-by-username form and the feed; gauges on the side |
+| `/compose`                   | Write a tweet with a live `n / 280` counter and publish it                                  |
+| `/feed`                      | My tweets and those of the people I follow first, then everyone else's, newest first        |
+| `/search`                    | Search people by name or username (with suggestions), alphabetical, with "Follow"           |
+| `/following`                 | People I follow, alphabetical by full name                                                  |
+| `/followers`                 | My followers, alphabetical, with "Follow" for those I don't follow back                     |
+| `/users/:username`           | A user's tweets, counters and a "Follow" button                                             |
+| `/users/:username/following` | People that user follows, alphabetical, with "Follow" for those I don't follow              |
+| `/users/:username/followers` | That user's followers, alphabetical, with "Follow" for those I don't follow                 |
 
-Every list shows 10 items per page. Private pages share a header with the logo, the logged-in
-`@username`, logout, the theme toggle and the language switcher. Unknown URLs show a 404 page.
+People lists (following, followers, search results, a user's tweets) show 10 items per page with
+Previous / Next. The feed loads 10 tweets at a time as you scroll (see
+[Pagination and the feed](#pagination-and-the-feed)). Private pages share a header with the logo,
+the logged-in `@username`, logout, the theme toggle and the language switcher. Unknown URLs show
+a 404 page.
 
 ## Tech stack
 
-- [React](https://react.dev/) + [Vite](https://vite.dev/) (JavaScript)
+- [React](https://react.dev/) + [Vite](https://vite.dev/) with TypeScript (services, hooks and
+  domain rules, checked by `npm run typecheck`) and JSX (components and pages)
 - [React Router](https://reactrouter.com/) (declarative mode: `BrowserRouter` + `Routes`)
 - [i18next](https://www.i18next.com/) + `react-i18next` for Spanish / English
 - CSS Modules over the design tokens in `src/styles/tokens.css`
@@ -70,7 +77,7 @@ password `telegraph`…) don't exist in Firebase.
 
 ### Data model
 
-Three collections (`src/services/firebase/collections.js`); the rules are in `firestore.rules`.
+Three collections (`src/services/firebase/collections.ts`); the rules are in `firestore.rules`.
 
 | Collection / document id            | Fields                                                                                                  | Notes                                                                                             |
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
@@ -86,6 +93,15 @@ Decisions and trade-offs:
   needed to log in with a username, and accepted for this class project.
 - **The rules cannot limit an account to one profile**, so a signed-in client could claim
   several usernames by writing to Firestore directly. Also accepted.
+- **Search runs in the browser.** Firestore cannot look inside a name, so the first search loads
+  up to 1000 `users` documents (`DIRECTORY_LIMIT`), keeps them for a minute (`DIRECTORY_TTL_MS`)
+  and filters them with the same rule the mocks use (`src/domain/search.ts`: the start of the
+  username or of any word of the full name, ignoring case and accents). Beyond 1000 accounts the
+  rest are not found, a new account may take up to a minute to show up, and every signed-in
+  client downloads those documents **including each account's email**: the app discards it when
+  it maps them to users, but it does reach the browser, because the rules allow `list` to signed-in
+  users. Fine for a class project; a real network would need a search service and no emails in
+  the profile.
 - **Copies of names are checked by the rules** against the author's profile (`get()`), so nobody
   can publish or follow under a name that isn't theirs, or follow a username nobody has.
 - **Counters are never stored**: followers and following come from `getCountFromServer`, so they
@@ -100,18 +116,33 @@ Decisions and trade-offs:
 
 Firestore's web SDK has no offset, so every list is cursor-paginated: a page is
 `startAfter(<last document shown>)` + `limit`, the cursor is that document's id, and the total
-for "Page X of Y" comes from `getCountFromServer` (`src/services/firebase/paginateQuery.js`).
+for "Page X of Y" comes from `getCountFromServer` (`src/services/firebase/paginateQuery.ts`).
+The people lists show it as Previous / Next (`usePaginatedList`). Search results come from an
+already filtered array and are cut into pages by the same cursor rule (`src/services/paginateArray.ts`).
 
-The feed is "my tweets + those of everyone I follow". Firestore allows at most 30 values in an
-`in` filter, so the authors are split into chunks of 30 and every chunk is queried on its own.
-All chunks share one order (newest first), so **one cursor serves all of them**: the last tweet
-shown. Each page asks every chunk for up to 11 tweets after it, merges them, shows the 10
-newest, and there is a next page when more than 10 came back. What a chunk didn't return can
-only come after the last tweet shown, so nothing is skipped or repeated, even if the people I
-follow change between pages.
+The feed is "my tweets and those of everyone I follow first, then everyone else's", each group
+newest first, so an account that follows nobody still has something to read. It is not paged
+with numbers: `useInfiniteList` appends 10 tweets per request, `useOnVisible` asks for the next
+10 when the end of the list scrolls into view (an `IntersectionObserver`), and a "Load more"
+button does the same for keyboard and screen-reader users. A tweet that fails to load keeps the
+ones already shown and offers "Try again". The footer reads "Showing N of M tweets", where M is
+every tweet in the network.
 
-Known limits: every page reads the whole list of people I follow (one read per follow) and
-does one query and one count per chunk, so a feed costs more reads as the follow list grows.
+In Firebase the feed has two phases and **one cursor** (the last tweet shown) for both:
+
+1. Me and the people I follow. Firestore allows at most 30 values in an `in` filter, so the
+   authors are split into chunks of 30 and every chunk is queried on its own. All chunks share one
+   order (newest first), so one cursor serves all of them. Each page asks every chunk for up to 11
+   tweets after it, merges them and keeps the 10 newest. What a chunk didn't return can only come
+   after the last tweet shown, so nothing is skipped or repeated.
+2. Everyone else, once the first group runs out: the newest tweets in batches of 50, skipping
+   those by authors of the first group, until the page is full. Whether the cursor belongs to
+   the first or the second phase is decided by its author.
+
+Known limits: every page reads the whole list of people I follow (one read per follow), does one
+query and one count per chunk and one count of all tweets, so a feed costs more reads as the
+follow list and the network grow. If I follow someone while scrolling, tweets that were already
+shown as "everyone else's" are not reordered until the feed is reloaded.
 
 ### Demo data
 
@@ -158,7 +189,8 @@ password: run `--clean` when the demo is over.
 | Script                 | Description                                                           |
 | ---------------------- | --------------------------------------------------------------------- |
 | `npm run dev`          | Start the development server                                          |
-| `npm run build`        | Build for production into `dist/`                                     |
+| `npm run build`        | Type-check (`tsc`) and build for production into `dist/`              |
+| `npm run typecheck`    | Type-check only                                                       |
 | `npm run preview`      | Preview the production build                                          |
 | `npm run lint`         | Lint the source code                                                  |
 | `npm run lint:fix`     | Lint and auto-fix what ESLint can                                     |
@@ -173,14 +205,15 @@ password: run `--clean` when the demo is over.
 ```text
 src/
 ├── domain/      Pure business rules: limits, validation, sort keys, ServiceError codes
-├── services/    Service contracts, the ServicesProvider and their implementations
+├── interfaces/  TypeScript types: the four service contracts, pagination, models, hook shapes
+├── services/    The ServicesProvider and the implementations of the contracts
 │   ├── firebase/ Firebase implementation: Auth + Firestore, pagination helper
 │   └── mock/    In-memory implementation with demo data, used by the tests
 ├── auth/        AuthProvider + useAuth: the session, mirrored from authService
 ├── social/      SocialProvider + useSocial: follow actions shared by every screen
 ├── theme/       ThemeProvider, useTheme and the saved theme preference
 ├── i18n/        i18next setup, es/en translations and error-code messages
-├── hooks/       Data and form hooks (usePaginatedList, useForm, useFollowCounts…)
+├── hooks/       Data and form hooks (usePaginatedList, useInfiniteList, useForm…)
 ├── components/  Reusable UI components, one folder each with its CSS Module
 ├── layouts/     AuthLayout (public pages) and AppLayout (header · nav · page · gauges)
 ├── routes/      Route table, paths and guards (RequireAuth, PublicOnly)
@@ -194,10 +227,11 @@ Data flows one way: **pages → hooks → services**. Pages and components never
 the mock data, and business logic stays out of JSX.
 
 - The UI talks to four services (`authService`, `userService`, `tweetService`,
-  `followService`) through `useServices()`. Their contracts are documented in
-  `src/services/contracts.js`. Every method is async and every list is cursor-paginated:
+  `followService`) through `useServices()`. Their contracts are typed in `src/interfaces/`
+  (`authService.ts`, `userService.ts`, `tweetService.ts`, `followService.ts`; `services.ts` groups
+  them). Every method is async and every list is cursor-paginated:
   `{ items, nextCursor, total }`.
-- `src/services/createAppServices.js` is the only place that picks an implementation: Firebase
+- `src/services/createAppServices.ts` is the only place that picks an implementation: Firebase
   for the running app, the mocks for the tests. No component knows which one it talks to.
 - Business failures throw a `ServiceError` with a stable `code` (for example
   `follow/already-following`), which the UI translates.
@@ -208,8 +242,12 @@ the mock data, and business logic stays out of JSX.
   on `<html>` selects the palette, dark by default. An inline script in `index.html` applies the
   saved theme (`localStorage` key `telegraph.theme`) before React mounts, so the page never
   flashes the wrong theme. Components style themselves with CSS Modules.
-- Lists use `usePaginatedList(fetchPage)`, which keeps a stack of cursors for Previous / Next and
-  feeds `PagedList` (spinner, error with retry, empty state, "Page X of Y").
+- People lists use `usePaginatedList(fetchPage)`, which keeps a stack of cursors for Previous /
+  Next and feeds `PagedList` (spinner, error with retry, empty state, "Page X of Y"). The feed uses
+  `useInfiniteList(fetchPage)` instead, which appends pages and skips repeated ids. Both take the
+  same `fetchPage({ cursor, pageSize })`.
+- `SearchBox` is an accessible combobox (arrows, Enter, Escape): focused and empty it recommends
+  people I don't follow yet; typing looks up matches after a 200 ms pause.
 - After a follow, `SocialProvider` bumps a version that makes counters and Follow buttons reload,
   so every part of the screen agrees without a page reload.
 - Every visible string goes through i18next (`src/i18n/locales/es.json` and `en.json`, same
@@ -221,16 +259,17 @@ the mock data, and business logic stays out of JSX.
 
 ## Testing
 
-`npm test` runs unit tests (domain rules, mock services, `usePaginatedList`, translations,
-`TweetCard`) and integration tests that render the whole app on mock services with Testing
-Library: route guards, login and logout, Google onboarding, publishing, following and the
-paginated lists. Tests that need a DOM declare `// @vitest-environment jsdom` at the top.
+`npm test` runs unit tests (domain rules, mock services, `usePaginatedList`, `useInfiniteList`,
+translations, `TweetCard`) and integration tests that render the whole app on mock services with
+Testing Library: route guards, login and logout, Google onboarding, publishing, following, search,
+any user's lists, the paginated lists and the feed that loads as you scroll. Tests that need a DOM
+declare `// @vitest-environment jsdom` at the top.
 
-The Firebase services are tested against `src/test/fakeFirestore.js`, an in-memory Firestore
+The Firebase services are tested against `src/test/fakeFirestore.ts`, an in-memory Firestore
 that orders, filters and pages like the real one and **rejects** what Firestore rejects when a
 query runs: more than 30 values in an `in`, and a query whose composite index is missing from
 `firestore.indexes.json`. It does **not** run the security rules (they need the Firebase
-emulator): `firestoreRules.test.js` only checks that the rules' fields and limits match the
+emulator): `firestoreRules.test.ts` only checks that the rules' fields and limits match the
 code. Tests never contact a Firebase project.
 
 ## Code style
