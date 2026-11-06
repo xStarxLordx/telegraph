@@ -90,7 +90,11 @@
     "subtitle": "Primero tus tweets y los de quienes sigues; después, los demás, del más reciente al más antiguo.",
     "emptyTitle": "Aún no hay tweets",
     "emptyMessage": "Publica el primero o busca personas para seguir.",
-    "emptyAction": "Buscar personas"
+    "emptyAction": "Buscar personas",
+    "loadMore": "Cargar más",
+    "progress": "Mostrando {{shown}} de {{total}} tweets",
+    "end_one": "Has llegado al final: {{count}} tweet.",
+    "end_other": "Has llegado al final: {{count}} tweets."
   },
   "following": {
     "title": "Siguiendo",

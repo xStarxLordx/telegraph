@@ -34,7 +34,7 @@ General rules `G-xx` are defined in [`../CLAUDE.md`](../CLAUDE.md#general-requir
 **Description:** Create the Firebase project, register the web app, enable Authentication
 (Email/Password and Google providers) and Cloud Firestore. Read the web config from
 `VITE_FIREBASE_*` variables in `.env.local` (ignored by git) and commit a `.env.example`.
-Initialize the SDK once in `src/services/firebase/firebaseApp.js`. Optionally enable the Firebase
+Initialize the SDK once in `src/services/firebase/firebaseApp.ts`. Optionally enable the Firebase
 Emulator Suite for local development and tests.
 **Covers:** prerequisite for R2.x.
 **Depends on:** M1-01, M1-03.

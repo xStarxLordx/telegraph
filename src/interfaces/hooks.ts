@@ -141,6 +141,32 @@ export interface PaginatedList<T> {
   first(): void;
 }
 
+export interface InfiniteRequest<T> {
+  fetchPage: PageFetcher<T>;
+  cursor: string | null;
+  token: number;
+}
+
+export interface SettledInfiniteLoad<T> {
+  request: InfiniteRequest<T> | null;
+  items: T[];
+  nextCursor: string | null;
+  total: number;
+  error: unknown;
+}
+
+export interface InfiniteList<T> {
+  items: T[];
+  total: number;
+  hasMore: boolean;
+  loading: boolean;
+  loadingMore: boolean;
+  settled: boolean;
+  error: unknown;
+  loadMore(): void;
+  retry(): void;
+}
+
 export type CounterStateValue = (typeof CounterState)[keyof typeof CounterState];
 
 export interface TweetCounter {

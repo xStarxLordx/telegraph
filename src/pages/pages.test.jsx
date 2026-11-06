@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { compareByFullName } from '../domain/sorting';
@@ -430,5 +430,83 @@ describe('Search suggestions', () => {
     await user.keyboard('{Enter}');
     const results = await screen.findByRole('list', { name: 'Resultados de la búsqueda' });
     expect(within(results).getAllByRole('listitem')).toHaveLength(6);
+  });
+});
+
+function createObserverStub(observers) {
+  return function FakeIntersectionObserver(callback) {
+    const observer = {
+      callback,
+      active: true,
+      observe: () => {},
+      disconnect: () => {
+        observer.active = false;
+      },
+    };
+    observers.push(observer);
+    return observer;
+  };
+}
+
+describe('Feed lazy loading', () => {
+  const articles = (feed) => within(feed).queryAllByRole('article');
+
+  const loadEverything = async (user, feed) => {
+    const button = screen.queryByRole('button', { name: 'Cargar más' });
+    if (!button) return;
+    const shown = articles(feed).length;
+    await user.click(button);
+    await waitFor(() => expect(articles(feed).length).toBeGreaterThan(shown));
+    await loadEverything(user, feed);
+  };
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('loads the next 10 tweets with "Cargar más" until the feed ends', async () => {
+    const user = userEvent.setup();
+    const { total } = await services.tweetService.listFeed(ada.id);
+    renderApp('/feed', { services });
+    const feed = await screen.findByRole('feed', { name: 'Feed' });
+    await waitFor(() => expect(articles(feed)).toHaveLength(10));
+    expect(screen.getByText(`Mostrando 10 de ${total} tweets`)).toBeTruthy();
+    expect(screen.queryByRole('navigation', { name: 'Paginación' })).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: 'Cargar más' }));
+    await waitFor(() => expect(articles(feed)).toHaveLength(20));
+    expect(screen.getByText(`Mostrando 20 de ${total} tweets`)).toBeTruthy();
+
+    await loadEverything(user, feed);
+
+    expect(articles(feed)).toHaveLength(total);
+    expect(new Set(articles(feed).map((article) => article.textContent)).size).toBe(total);
+    expect(screen.getByText(`Has llegado al final: ${total} tweets.`)).toBeTruthy();
+  });
+
+  it('loads the next page by itself when the end of the list scrolls into view', async () => {
+    const observers = [];
+    vi.stubGlobal('IntersectionObserver', createObserverStub(observers));
+    renderApp('/feed', { services });
+    const feed = await screen.findByRole('feed', { name: 'Feed' });
+    await waitFor(() => expect(articles(feed)).toHaveLength(10));
+    await waitFor(() => expect(observers.some((observer) => observer.active)).toBe(true));
+
+    act(() => {
+      observers
+        .filter((observer) => observer.active)
+        .forEach((observer) => observer.callback([{ isIntersecting: true }]));
+    });
+
+    await waitFor(() => expect(articles(feed)).toHaveLength(20));
+  });
+
+  it('does not load anything while the end of the list stays out of view', async () => {
+    vi.stubGlobal('IntersectionObserver', createObserverStub([]));
+    renderApp('/feed', { services });
+    const feed = await screen.findByRole('feed', { name: 'Feed' });
+    await waitFor(() => expect(articles(feed)).toHaveLength(10));
+
+    expect(articles(feed)).toHaveLength(10);
   });
 });

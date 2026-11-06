@@ -1,7 +1,10 @@
 # Telegraph — X (Twitter) clone · class project
 
 React SPA (Vite, TypeScript + JSX, CSS Modules) + Firebase (Auth, Firestore). Individual project.
-Spec: `Clon de X.pdf` in this folder. If it disagrees with these docs, the PDF wins: fix the docs.
+Services, hooks and domain rules are `.ts`; components and pages are `.jsx`. `npm run typecheck`
+(also part of `npm run build`) must pass besides lint and tests.
+Spec: `Clon de X.pdf` in this folder (it is in `.gitignore`, so a fresh clone doesn't have it).
+If it disagrees with these docs, the PDF wins: fix the docs.
 
 ## Where the work is planned
 
@@ -34,7 +37,7 @@ update them.
 | G-06 | Every tweet is shown as: `Full Name, @username - date and time` on the first line and the body below, between separator rules. Single source: `TweetCard`.                                                      |
 | G-07 | Every visible string goes through i18next (`es` default, `en`). No hard-coded copy. _(Project decision, not from the PDF.)_                                                                                     |
 | G-08 | UX/UI is graded as a differentiator: follow `docs/design-system.md` in both themes.                                                                                                                             |
-| G-09 | Lists and feeds paginate at **10 items** per page (`PAGE_SIZE`). User lists sort alphabetically by full name; tweets sort newest first.                                                                         |
+| G-09 | Lists and feeds load **10 items** at a time (`PAGE_SIZE`): people lists paginate, the feed appends 10 per scroll. User lists sort alphabetically by full name; tweets sort newest first.                        |
 | G-10 | Tweets are limited to **280 characters** (`MAX_TWEET_LENGTH`), enforced in the UI, the service and the Firestore rules.                                                                                         |
 | G-11 | `bitacora.md` (AI log) at the repo root: append-only, committed throughout the project. See below.                                                                                                              |
 | G-12 | Graded on visible repo activity (commits, PRs, issues, reviews): no participation, no grade.                                                                                                                    |
@@ -57,7 +60,17 @@ graded. Commit it with the session's work, never in one final batch commit.
   every implementation. Failures throw `ServiceError` with a `code`; the UI translates the
   code and never parses messages.
 - Lists are **cursor-paginated** in the contract (`{ items, nextCursor, total }`), so the UI
-  never slices arrays and Firestore can use `startAfter`.
+  never slices arrays and Firestore can use `startAfter`. People lists use `usePaginatedList`
+  (Previous / Next); the feed uses `useInfiniteList` (appends pages, `useOnVisible` loads the next
+  one near the end, "Load more" is the keyboard fallback). Both take the same `fetchPage`.
+- **The feed is not only the people I follow:** it lists my tweets and those I follow first, then
+  everyone else's, each group newest first (`tweetService.listFeed`, commit `e689e10`). The spec
+  (R1.8) says "me and the users I follow", so this is a deliberate extension; revert it in both
+  `mockTweetService` and `firebaseTweetService` if the course expects the strict version.
+- **Search is a client-side filter** (`src/domain/search.ts`, shared by both `userService`s). The
+  Firebase one loads up to `DIRECTORY_LIMIT` profiles (1000) and caches them `DIRECTORY_TTL_MS`
+  (1 min). Beyond 1000 accounts search misses people; a new account can take a minute to appear.
+  Those documents carry emails and reach every signed-in browser (see the README trade-offs).
 - Write methods take the acting user's id, and it must be the logged-in user
   (`PERMISSION_DENIED` otherwise). The mock enforces it because the Firestore rules will.
 - Mock data persists in `localStorage` (`telegraph.mock.v1`); the tests (`src/test/renderApp.jsx`)
@@ -69,8 +82,8 @@ graded. Commit it with the session's work, never in one final batch commit.
   `data-theme` on `<html>`, dark by default.
 - **One app, two palettes:** a theme changes only color-token values. Never branch markup, icons,
   fonts or shapes on the theme (the sun/moon toggle icon is the only exception).
-- Follows go through `useSocial().follow` (or `useFollowUser`), never straight to
-  `followService.follow`: it bumps the version that makes counters and Follow buttons reload.
+- Follows go through `useSocial().follow` / `.followByUsername` (or `useFollowUser`), never
+  straight to `followService`: they bump the version that makes counters and Follow buttons reload.
 - Redirects after login, register and logout belong to the route guards (`src/routes/guards.jsx`):
   auth pages only call the service and let `PublicOnly` / `RequireAuth` react to the session.
 
@@ -137,7 +150,10 @@ The tracking tables in `docs/` say which tasks are finished; this is only what t
   `size()`: only a name with emoji near 50 characters would notice.
 - **Feed pagination over chunked queries:** one cursor (the last tweet shown) serves every chunk,
   because all chunks share the same order. Each page asks every chunk for 11 after it, merges and
-  keeps the 10 newest (M2-12). Don't add a cursor per chunk: it is redundant.
+  keeps the 10 newest (M2-12). Don't add a cursor per chunk: it is redundant. Once my people's
+  tweets run out, `listFromOthers` reads the rest of the network in batches of 50 and skips my
+  people's; the cursor's author says which phase it belongs to. Following someone mid-scroll does
+  not reorder what is already on screen.
 - **ESLint stays on 9.x.** Airbnb comes from `eslint-config-airbnb-extended`, which doesn't support
   ESLint 10 yet. The official `eslint-config-airbnb` is stuck on ESLint 8. Never run
   `npm audit fix --force`: it downgrades `firebase` to 9.x. The 4 advisories left are
@@ -151,6 +167,8 @@ The tracking tables in `docs/` say which tasks are finished; this is only what t
   as `useAsyncData` and `usePaginatedList` do, and only set state in the async callbacks.
 - Vitest runs in Node by default: a test that renders to the DOM starts with
   `// @vitest-environment jsdom`. `src/test/renderApp.jsx` mounts the whole app on fresh mocks.
+  jsdom has no `IntersectionObserver`: `useOnVisible` does nothing there, so tests of the feed
+  stub it (or click "Load more").
 
 ## Repository etiquette
 

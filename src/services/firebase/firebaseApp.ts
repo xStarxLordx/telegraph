@@ -1,4 +1,4 @@
-// Firebase initialisation: the only module that reads the web config and starts the SDK.
+// Firebase initialization: the only module that reads the web config and starts the SDK.
 // The config is not secret (security rules protect the data), but it lives in `.env.local` so
 // each environment can point at its own project. See `.env.example`.
 import { getApps, initializeApp, type FirebaseOptions } from 'firebase/app';
