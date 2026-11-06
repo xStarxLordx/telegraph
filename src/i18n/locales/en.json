@@ -87,7 +87,7 @@
   },
   "feed": {
     "title": "Feed",
-    "subtitle": "Your tweets and those of people you follow first; then everyone else’s, newest first.",
+    "subtitle": "Your tweets and those of people you follow first; then everyone else's, newest first.",
     "emptyTitle": "No tweets yet",
     "emptyMessage": "Publish the first one or search for people to follow.",
     "emptyAction": "Search people",
@@ -105,7 +105,7 @@
     "titleOf": "Followed by {{name}}",
     "subtitleOf_one": "@{{username}} follows {{count}} person, in alphabetical order.",
     "subtitleOf_other": "@{{username}} follows {{count}} people, in alphabetical order.",
-    "emptyTitleOf": "@{{username}} doesn’t follow anyone yet"
+    "emptyTitleOf": "@{{username}} doesn't follow anyone yet"
   },
   "followers": {
     "title": "Followers",
@@ -181,7 +181,7 @@
   "followByUsername": {
     "title": "Follow by username",
     "placeholder": "ada",
-    "searchLink": "Don’t know the username? Search for people."
+    "searchLink": "Don't know the username? Search for people."
   },
   "search": {
     "title": "Search people",

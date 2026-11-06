@@ -1,8 +1,8 @@
 rules_version = '2';
 
-// Everything not listed here is denied. The limits below mirror src/domain/constants.js
+// Everything not listed here is denied. The limits below mirror src/domain/constants.ts
 // (USERNAME_MIN/MAX_LENGTH = 3/15, FULL_NAME_MAX_LENGTH = 50, MAX_TWEET_LENGTH = 280): keep them
-// in sync. firestoreRules.test.js fails when the fields or limits here drift from the code.
+// in sync. firestoreRules.test.ts fails when the fields or limits here drift from the code.
 service cloud.firestore {
   match /databases/{database}/documents {
 
