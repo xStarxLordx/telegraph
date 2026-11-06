@@ -3,7 +3,6 @@ import AuthProvider from './auth/AuthProvider';
 import ToastProvider from './components/Toast/ToastProvider';
 import SocialProvider from './social/SocialProvider';
 
-/** App-level state shared by every route: session, follow actions and toasts. */
 function AppProviders({ children }) {
   return (
     <AuthProvider>
