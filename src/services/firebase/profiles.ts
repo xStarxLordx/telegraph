@@ -1,5 +1,6 @@
 // Reading profiles (`users` documents) and checking who is acting; shared by every Firebase
 // service. The document id is the username, so an account is found by its `uid` field instead.
+import type { Auth } from 'firebase/auth';
 import {
   collection,
   doc,
@@ -43,6 +44,14 @@ export function profileToUser({ uid, fullName, username }: ProfileDocument): Use
   return { id: uid, fullName, username };
 }
 
+/** Throws unless the signed-in Firebase account is `actorId`: how every write method starts. */
+export async function requireSignedIn(auth: Auth, actorId: string): Promise<void> {
+  await auth.authStateReady();
+  const firebaseUser = auth.currentUser;
+  if (!firebaseUser) throw new ServiceError(ErrorCode.NOT_AUTHENTICATED);
+  if (firebaseUser.uid !== actorId) throw new ServiceError(ErrorCode.PERMISSION_DENIED);
+}
+
 /**
  * Write methods take the acting user's id (see src/interfaces/services.ts): it must be the
  * signed-in account, and that account needs a username. The security rules check the same on
@@ -52,10 +61,7 @@ export async function requireActor(
   { auth, db }: FirebaseServiceDeps,
   actorId: string,
 ): Promise<ProfileDocument> {
-  await auth.authStateReady();
-  const firebaseUser = auth.currentUser;
-  if (!firebaseUser) throw new ServiceError(ErrorCode.NOT_AUTHENTICATED);
-  if (firebaseUser.uid !== actorId) throw new ServiceError(ErrorCode.PERMISSION_DENIED);
+  await requireSignedIn(auth, actorId);
   const profile = await findProfileByUid(db, actorId);
   if (!profile) throw new ServiceError(ErrorCode.USERNAME_REQUIRED);
   return profile;

@@ -54,9 +54,10 @@ export function validatePassword(password: string): ValidationResult {
   return null;
 }
 
-export function validateTweetBody(body: string): ValidationResult {
+/** A tweet needs text, unless it carries media: then the text is optional (still up to 280). */
+export function validateTweetBody(body: string, hasMedia = false): ValidationResult {
   const value = body.trim();
-  if (!value) return ErrorCode.TWEET_EMPTY;
+  if (!value && !hasMedia) return ErrorCode.TWEET_EMPTY;
   if (countCharacters(value) > MAX_TWEET_LENGTH) return ErrorCode.TWEET_TOO_LONG;
   return null;
 }

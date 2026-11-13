@@ -86,6 +86,46 @@ describe('publish', () => {
     expect(fakeFirestore.ids('tweets')).toEqual([]);
   });
 
+  describe('with media', () => {
+    const media = {
+      kind: 'gif' as const,
+      url: 'https://firebasestorage.googleapis.com/v0/b/b/o/tweet-media%2Fuid-ada%2Fab-12.gif?alt=media&token=ab-12',
+      path: 'tweet-media/uid-ada/ab-12.gif',
+    };
+
+    it('stores the attachment next to the text and returns it', async () => {
+      setClock(7);
+      const tweet = await tweetService.publish({ authorId: ADA.uid, body: ' Mira ', media });
+
+      expect(tweet).toMatchObject({ body: 'Mira', media });
+      expect(fakeFirestore.get(`tweets/${tweet.id}`)).toMatchObject({ body: 'Mira', media });
+    });
+
+    it('lets the text be empty when there is media, and still counts the 280 limit', async () => {
+      const mediaOnly = await tweetService.publish({ authorId: ADA.uid, body: '  ', media });
+      expect(mediaOnly).toMatchObject({ body: '', media });
+
+      const error = await failureOf(
+        tweetService.publish({ authorId: ADA.uid, body: 'x'.repeat(MAX_TWEET_LENGTH + 1), media }),
+      );
+      expect(error).toMatchObject({ code: ErrorCode.TWEET_TOO_LONG, field: 'body' });
+    });
+
+    it('writes no `media` field at all for a tweet without it (Firestore rejects undefined)', async () => {
+      const tweet = await tweetService.publish({ authorId: ADA.uid, body: 'solo texto' });
+      expect(fakeFirestore.get(`tweets/${tweet.id}`)).not.toHaveProperty('media');
+      expect(tweet).not.toHaveProperty('media');
+    });
+
+    it('returns the attachment in every list', async () => {
+      const { id } = await tweetService.publish({ authorId: ADA.uid, body: '', media });
+      const byAuthor = await tweetService.listByAuthor(ADA.uid);
+      const feed = await tweetService.listFeed(ADA.uid);
+      expect(byAuthor.items.find((tweet) => tweet.id === id)?.media).toEqual(media);
+      expect(feed.items.find((tweet) => tweet.id === id)?.media).toEqual(media);
+    });
+  });
+
   it('needs a signed-in user acting as themselves, with a username', async () => {
     auth.currentUser = null;
     const loggedOut = await failureOf(tweetService.publish({ authorId: ADA.uid, body: '   ' }));

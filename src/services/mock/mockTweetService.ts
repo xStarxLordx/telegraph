@@ -15,10 +15,10 @@ export default function createMockTweetService({ db, delay, now }: MockServiceDe
   };
 
   return {
-    async publish({ authorId, body }) {
+    async publish({ authorId, body, media }) {
       await delay();
       const author = requireActor(db, authorId);
-      const error = validateTweetBody(body);
+      const error = validateTweetBody(body, Boolean(media));
       if (error) throw new ServiceError(error, { field: 'body' });
       const record: TweetRecord = {
         id: db.nextId('tweet', 't'),
@@ -27,6 +27,7 @@ export default function createMockTweetService({ db, delay, now }: MockServiceDe
         authorUsername: author.username,
         body: body.trim(),
         createdAt: now().toISOString(),
+        ...(media ? { media } : {}),
       };
       db.insertTweet(record);
       return toTweet(record);

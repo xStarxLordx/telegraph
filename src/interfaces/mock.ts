@@ -1,4 +1,5 @@
 // What the mock services store and how they are wired together (mock-only, used by the tests).
+import type { MediaAttachment } from './media';
 import type { Services } from './services';
 import type { KeyValueStorage } from './storage';
 
@@ -19,6 +20,7 @@ export interface TweetRecord {
   authorUsername: string;
   body: string;
   createdAt: string;
+  media?: MediaAttachment;
 }
 
 export interface FollowRecord {

@@ -1,7 +1,7 @@
 // What the hooks in src/hooks take and return.
 import type { FormEvent } from 'react';
 import type { CounterState } from '../hooks/useTweetDraft';
-import type { AppErrorCode } from './errors';
+import type { AppErrorCode, ErrorCodeValue } from './errors';
 import type { Page, PageRequest } from './pagination';
 import type { Tweet } from './tweet';
 import type { User } from './user';
@@ -180,8 +180,23 @@ export interface TweetDraft {
   text: string;
   setText(text: string): void;
   counter: TweetCounter;
-  /** Posts the draft as the logged-in user. */
+  /** The picture, GIF or video chosen for the tweet, or null. Only a valid file is kept. */
+  media: File | null;
+  /** Checks the file: a valid one becomes `media`, otherwise `mediaError` says why. Null removes it. */
+  selectMedia(file: File | null): void;
+  mediaError: ErrorCodeValue | null;
+  /** 0..1 while the file uploads, null otherwise. */
+  uploadProgress: number | null;
+  /** Uploads the media (if any), then posts the draft as the logged-in user. */
   publish(): Promise<Tweet>;
+}
+
+export interface MediaDownload {
+  /** Saves the file to the device; never throws. */
+  download(): Promise<void>;
+  pending: boolean;
+  /** True after a download that couldn't fetch the file: offer a link to open it instead. */
+  blocked: boolean;
 }
 
 export interface FollowUserState {

@@ -7,6 +7,7 @@
 // - lists are cursor-paginated with Firestore `startAfter` semantics (see pagination.ts).
 import type { AuthService } from './authService';
 import type { FollowService } from './followService';
+import type { MediaService } from './mediaService';
 import type { TweetService } from './tweetService';
 import type { UserService } from './userService';
 
@@ -15,4 +16,5 @@ export interface Services {
   userService: UserService;
   tweetService: TweetService;
   followService: FollowService;
+  mediaService: MediaService;
 }

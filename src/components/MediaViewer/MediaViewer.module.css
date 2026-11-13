@@ -1,0 +1,82 @@
+/* The browser's modal <dialog> sits in the top layer: the page behind is inert and dimmed. */
+.dialog {
+  width: min(94vw, 960px);
+  max-width: none;
+  max-height: 94vh;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text);
+  overflow: hidden;
+}
+
+.dialog::backdrop {
+  background: color-mix(in srgb, var(--color-bg) 84%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+.dialog[open] {
+  animation: viewer-in 160ms ease-out;
+}
+
+@keyframes viewer-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  max-height: 94vh;
+}
+
+/* Dashed rule under the bar, like the separators of a tweet (G-06). */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 10px 12px 10px 20px;
+  border-bottom: 1px dashed var(--color-border);
+}
+
+.caption {
+  flex: 1 1 200px;
+  margin: 0;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* The picture fits the screen whatever its shape, on the same sunken ground as in the feed. */
+.stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  background: var(--color-surface-sunken);
+}
+
+.image {
+  display: block;
+  width: 100%;
+  max-height: calc(94vh - 120px);
+  object-fit: contain;
+}
+
+.notice {
+  padding: 12px 20px;
+  border-top: 1px dashed var(--color-border);
+}

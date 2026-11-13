@@ -7,16 +7,18 @@ import createMockServices from './mock/createMockServices';
 vi.mock('./firebase/firebaseApp', () => ({
   getFirebaseAuth: () => ({}),
   getFirebaseDb: () => ({}),
+  getFirebaseStorage: () => ({}),
 }));
 
 describe('createAppServices', () => {
-  it('provides the four services, each with the methods of the contract', () => {
+  it('provides the five services, each with the methods of the contract', () => {
     const services = createAppServices();
     const reference = createMockServices();
 
     expect(Object.keys(services).sort()).toEqual([
       'authService',
       'followService',
+      'mediaService',
       'tweetService',
       'userService',
     ]);

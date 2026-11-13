@@ -97,7 +97,7 @@ describe('the dataset is well formed', () => {
       const profile = dataset.users.find((user) => user.data.uid === data.authorId).data;
       expect(data.authorUsername, id).toBe(profile.username);
       expect(data.authorFullName, id).toBe(profile.fullName);
-      expect(validateTweetBody(data.body), id).toBeNull();
+      expect(validateTweetBody(data.body, Boolean(data.media)), id).toBeNull();
       expect(data.body, id).toBe(data.body.trim());
       expect(data.createdAt.getTime()).toBeLessThanOrEqual(NOW.getTime());
     });
@@ -128,8 +128,40 @@ describe('the dataset is well formed', () => {
       ...new Set(docs.map(({ data }) => Object.keys(data).sort().join())),
     ];
     expect(fieldsOf(dataset.users)).toEqual([[...allowedFields('users')].sort().join()]);
-    expect(fieldsOf(dataset.tweets)).toEqual([[...allowedFields('tweets')].sort().join()]);
     expect(fieldsOf(dataset.follows)).toEqual([[...allowedFields('follows')].sort().join()]);
+    // A tweet has `media` only when it has a picture or a GIF: either shape, and nothing else.
+    const allowed = allowedFields('tweets');
+    const shapes = [allowed.filter((field) => field !== 'media'), allowed].map((fields) =>
+      [...fields].sort().join(),
+    );
+    fieldsOf(dataset.tweets).forEach((shape) => expect(shapes).toContain(shape));
+  });
+
+  it('has tweets with a picture or a GIF, linked from CATAAS (never copied)', () => {
+    const withMedia = dataset.tweets.filter(({ data }) => data.media);
+    expect(withMedia.length).toBeGreaterThanOrEqual(6);
+    expect(new Set(withMedia.map(({ data }) => data.media.kind))).toEqual(
+      new Set(['image', 'gif']),
+    );
+    withMedia.forEach(({ id, data }) => {
+      // A link has no Storage `path`; the Admin SDK skips the rules that ask for one.
+      expect(Object.keys(data.media).sort(), id).toEqual(['kind', 'url']);
+      expect(data.media.url, id).toMatch(
+        /^https:\/\/cataas\.com\/cat\/[A-Za-z0-9]+(\?width=\d+)?$/,
+      );
+    });
+    expect(withMedia.some(({ data }) => data.body === '')).toBe(true);
+    // Their ids don't disturb the earlier ones, and their authors aren't accounts whose tweet
+    // counts the scenarios below pin.
+    expect(withMedia.every(({ id }) => /^demo-m\d{3}$/.test(id))).toBe(true);
+    const pinned = ['ada', 'diez', 'once', 'novato', 'telegrafista', 'Hypatia'];
+    expect(withMedia.some(({ data }) => pinned.includes(data.authorUsername))).toBe(false);
+  });
+
+  it('serves those tweets, media included, through the real tweet service', async () => {
+    const { data } = dataset.tweets.find(({ id }) => id === 'demo-m001');
+    const items = (await tweetsOf(data.authorUsername)).flatMap((page) => page.items);
+    expect(items.find((tweet) => tweet.id === 'demo-m001').media).toEqual(data.media);
   });
 
   it('is the same every time for the same moment (so seeding twice changes nothing)', () => {

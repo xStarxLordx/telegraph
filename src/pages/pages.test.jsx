@@ -2,9 +2,11 @@
 import { act, cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MAX_IMAGE_BYTES } from '../domain/constants';
 import { compareByFullName } from '../domain/sorting';
 import createMockServices from '../services/mock/createMockServices';
 import { DEMO_PASSWORD } from '../services/mock/seed';
+import stubDialog from '../test/dialogStub';
 import renderApp from '../test/renderApp';
 
 let services;
@@ -125,6 +127,133 @@ describe('Compose page (M1-13)', () => {
         'Hola desde las pruebas 🚂',
       ),
     );
+  });
+});
+
+describe('Compose page with media', () => {
+  const ADD_MEDIA = 'Añadir foto, GIF o video';
+
+  const fileOf = (name, type, size = 10) => {
+    const file = new File(['x'], name, { type });
+    Object.defineProperty(file, 'size', { value: size });
+    return file;
+  };
+
+  beforeEach(() => {
+    // jsdom has no object URLs: the preview and the mock upload both ask for one.
+    URL.createObjectURL = vi.fn(() => 'blob:preview');
+    URL.revokeObjectURL = vi.fn();
+  });
+
+  afterEach(() => {
+    delete URL.createObjectURL;
+    delete URL.revokeObjectURL;
+  });
+
+  it('previews the file and publishes a tweet that is only a picture', async () => {
+    const user = userEvent.setup();
+    renderApp('/compose', { services });
+    const publish = await screen.findByRole('button', { name: 'Publicar' });
+    expect(publish.disabled).toBe(true);
+
+    await user.upload(screen.getByLabelText(ADD_MEDIA), fileOf('gato.png', 'image/png'));
+    expect(await screen.findByAltText('Vista previa: gato.png')).toBeTruthy();
+    expect(publish.disabled).toBe(false);
+    await user.click(publish);
+
+    const feed = await screen.findByRole('feed');
+    await waitFor(() => {
+      const [first] = within(feed).getAllByRole('article');
+      const image = within(first).getByAltText('Imagen publicada por Ada Lovelace');
+      expect(image.getAttribute('src')).toBe('blob:preview');
+    });
+  });
+
+  it('sends the text together with a GIF', async () => {
+    const user = userEvent.setup();
+    renderApp('/compose', { services });
+    await user.type(await screen.findByLabelText('Tu tweet'), 'Mira qué gato');
+    await user.upload(screen.getByLabelText(ADD_MEDIA), fileOf('baile.gif', 'image/gif'));
+    await user.click(screen.getByRole('button', { name: 'Publicar' }));
+
+    const feed = await screen.findByRole('feed');
+    await waitFor(() => {
+      const [first] = within(feed).getAllByRole('article');
+      expect(first.textContent).toContain('Mira qué gato');
+      expect(within(first).getByAltText('GIF publicado por Ada Lovelace')).toBeTruthy();
+    });
+  });
+
+  it('explains a file that is not supported and keeps "Publicar" disabled', async () => {
+    // The input's `accept` would already filter this file in a real browser's picker.
+    const user = userEvent.setup({ applyAccept: false });
+    renderApp('/compose', { services });
+    const publish = await screen.findByRole('button', { name: 'Publicar' });
+    await user.upload(screen.getByLabelText(ADD_MEDIA), fileOf('a.pdf', 'application/pdf'));
+
+    expect((await screen.findByRole('alert')).textContent).toContain('no es compatible');
+    expect(publish.disabled).toBe(true);
+    expect(screen.queryByAltText(/Vista previa/)).toBeNull();
+  });
+
+  it('explains a file that is too large', async () => {
+    const user = userEvent.setup();
+    renderApp('/compose', { services });
+    await screen.findByRole('button', { name: 'Publicar' });
+    await user.upload(
+      screen.getByLabelText(ADD_MEDIA),
+      fileOf('enorme.png', 'image/png', MAX_IMAGE_BYTES + 1),
+    );
+
+    expect((await screen.findByRole('alert')).textContent).toContain('demasiado grande');
+    expect(screen.getByRole('button', { name: 'Publicar' }).disabled).toBe(true);
+  });
+
+  it('removes the file again, which disables "Publicar" when there is no text', async () => {
+    const user = userEvent.setup();
+    renderApp('/compose', { services });
+    const publish = await screen.findByRole('button', { name: 'Publicar' });
+    await user.upload(screen.getByLabelText(ADD_MEDIA), fileOf('gato.png', 'image/png'));
+    await screen.findByAltText('Vista previa: gato.png');
+
+    await user.click(screen.getByRole('button', { name: 'Quitar archivo' }));
+
+    expect(screen.queryByAltText(/Vista previa/)).toBeNull();
+    expect(publish.disabled).toBe(true);
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:preview');
+  });
+});
+
+describe('Media viewer in the feed', () => {
+  let restoreDialog;
+
+  beforeEach(() => {
+    restoreDialog = stubDialog();
+  });
+
+  afterEach(() => {
+    restoreDialog();
+  });
+
+  it('enlarges a picture of the feed, offers to download it and closes', async () => {
+    const user = userEvent.setup();
+    const url = 'https://cataas.com/cat/abc?width=640';
+    await services.tweetService.publish({
+      authorId: ada.id,
+      body: 'Mira',
+      media: { kind: 'image', url },
+    });
+    renderApp('/feed', { services });
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Ampliar: Imagen publicada por Ada Lovelace' }),
+    );
+    const dialog = await screen.findByRole('dialog', { name: 'Imagen publicada por Ada Lovelace' });
+    expect(within(dialog).getByRole('img').getAttribute('src')).toBe(url);
+    expect(within(dialog).getByRole('button', { name: 'Descargar' })).toBeTruthy();
+
+    await user.click(within(dialog).getByRole('button', { name: 'Cerrar visor' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   });
 });
 

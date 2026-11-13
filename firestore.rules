@@ -30,6 +30,24 @@ service cloud.firestore {
         && matchesProfile(username.lower(), uid, username, fullName);
     }
 
+    // True when `media` (a tweet's attachment) is a file that account `uid` uploaded to its own
+    // folder of Cloud Storage (see storage.rules and MEDIA_FOLDER in the code): the path and the
+    // download URL must both point at that file, so a tweet can't embed links to other sites or to
+    // somebody else's uploads. The extensions are the ones src/domain/media.ts accepts.
+    function isOwnMedia(media, uid) {
+      return media is map
+        && media.keys().hasOnly(['kind', 'url', 'path'])
+        && media.keys().hasAll(['kind', 'url', 'path'])
+        && media.kind in ['image', 'gif', 'video']
+        && media.path is string
+        && media.path.matches(
+          '^tweet-media/' + uid + '/[0-9a-f-]+[.](jpg|png|webp|gif|mp4|webm)$')
+        && media.url is string
+        && media.url.matches(
+          '^https://firebasestorage[.]googleapis[.]com/v0/b/[^/]+/o/tweet-media%2F' + uid
+          + '%2F[0-9a-f-]+[.](jpg|png|webp|gif|mp4|webm)[?]alt=media&token=[0-9a-f-]+$');
+    }
+
     // users/{usernameLower} -> { uid, fullName, username, email, createdAt }: one document per
     // account, keyed by its lowercase username. The key is what makes a username unique, and the
     // login reads it before anyone is signed in to turn the username into the account's email.
@@ -56,16 +74,18 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // tweets/{autoId} -> { authorId, authorFullName, authorUsername, body, createdAt }.
+    // tweets/{autoId} -> { authorId, authorFullName, authorUsername, body, createdAt } and, when
+    // the tweet has a picture, GIF or video, `media` ({ kind, url, path }).
     // Tweets are never edited or deleted. The body length is counted in code points, like the app
     // does (G-10): `size()` counts UTF-16 units, so an emoji would count twice. RE2's `.` matches
-    // one code point, and `(?s)` lets it match line breaks too.
+    // one code point, and `(?s)` lets it match line breaks too. A tweet with media may have an
+    // empty body.
     match /tweets/{tweetId} {
       allow read: if signedIn();
 
       allow create: if signedIn()
         && request.resource.data.keys().hasOnly(
-          ['authorId', 'authorFullName', 'authorUsername', 'body', 'createdAt'])
+          ['authorId', 'authorFullName', 'authorUsername', 'body', 'createdAt', 'media'])
         && request.resource.data.keys().hasAll(
           ['authorId', 'authorFullName', 'authorUsername', 'body', 'createdAt'])
         && request.resource.data.authorId == request.auth.uid
@@ -74,7 +94,10 @@ service cloud.firestore {
           request.resource.data.authorUsername,
           request.resource.data.authorFullName)
         && request.resource.data.body is string
-        && request.resource.data.body.matches('(?s)^.{1,280}$')
+        && (request.resource.data.body.matches('(?s)^.{1,280}$')
+          || ('media' in request.resource.data && request.resource.data.body == ''))
+        && (!('media' in request.resource.data)
+          || isOwnMedia(request.resource.data.media, request.auth.uid))
         && request.resource.data.createdAt == request.time;
 
       allow update, delete: if false;

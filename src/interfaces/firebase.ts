@@ -8,7 +8,9 @@ import type {
   QueryOrderByConstraint,
   Timestamp,
 } from 'firebase/firestore';
+import type { FirebaseStorage } from 'firebase/storage';
 import type { ErrorCodeValue } from './errors';
+import type { MediaAttachment } from './media';
 import type { PageRequest } from './pagination';
 import type { User } from './user';
 
@@ -16,6 +18,12 @@ import type { User } from './user';
 export interface FirebaseServiceDeps {
   auth: Auth;
   db: Firestore;
+}
+
+/** What the media service is built from: it writes to Cloud Storage, not to Firestore. */
+export interface FirebaseMediaDeps {
+  auth: Auth;
+  storage: FirebaseStorage;
 }
 
 /** `users/{usernameLower}`: the profile, the username claim and the login lookup. */
@@ -28,13 +36,17 @@ export interface ProfileDocument {
   createdAt: Timestamp;
 }
 
-/** `tweets/{autoId}`: the author's name and username are copied in, so feeds need no joins. */
+/**
+ * `tweets/{autoId}`: the author's name and username are copied in, so feeds need no joins.
+ * `media` is there only when the tweet has a picture, GIF or video.
+ */
 export interface TweetDocument {
   authorId: string;
   authorFullName: string;
   authorUsername: string;
   body: string;
   createdAt: Timestamp;
+  media?: MediaAttachment;
 }
 
 /** `follows/{followerId_followeeId}`: both people's names, plus their sort keys. */

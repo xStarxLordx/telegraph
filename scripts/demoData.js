@@ -1,5 +1,6 @@
 // The demo dataset for Firebase (loaded by `npm run seed`): the mock seed (25 people, with long
-// lists for @ada) plus extra people and tweets that exercise every screen and edge case.
+// lists for @ada) plus extra people and tweets that exercise every screen and edge case,
+// including a few tweets with a picture or a GIF.
 // Pure and I/O-free, so the tests can load it into the fake Firestore and run the real services.
 //
 // Every document id is fixed, and every account uid starts with DEMO_UID_PREFIX, so seeding twice
@@ -108,6 +109,53 @@ const ADA_SPECIAL_TWEETS = [
 ];
 
 const COUNTED_TWEETS = { diez: 10, once: 11 };
+
+// Tweets with a picture or a GIF of about five seconds. The files stay on CATAAS
+// (https://cataas.com, free cat pictures): its README keeps their rights with their authors, so
+// they are linked and never copied into this repository or the project's Storage. The photos ask
+// for a 640 px width to stay light. A link has no Storage `path`, which is why `media` here has
+// only `kind` and `url` (the Admin SDK skips the rules that ask for both).
+const CATAAS_CAT = 'https://cataas.com/cat';
+const photo = (id) => ({ kind: 'image', url: `${CATAAS_CAT}/${id}?width=640` });
+const animation = (id) => ({ kind: 'gif', url: `${CATAAS_CAT}/${id}` });
+
+// [username, body, media, minutes ago]. An empty body is a tweet that is only media. None of the
+// authors is one of the accounts whose tweet counts the demo scenarios pin (@ada, @diez…).
+const MEDIA_TWEETS = [
+  [
+    'babbage',
+    'Calculando cuántas siestas caben en un día. Resultado provisional: todas.',
+    animation('48xLBZGSXgxZRMAB'),
+    6,
+  ],
+  [
+    'tesla',
+    'Inspección de la estación: el inspector de turno no tolera retrasos.',
+    photo('1AKMzDtX4nlk6w5I'),
+    22,
+  ],
+  [
+    'mshelley',
+    'Mi criatura de hoy no necesita rayos: solo una caja de cartón.',
+    animation('6SzRQLt0yiPjLyNi'),
+    41,
+  ],
+  [
+    'verne',
+    'Viaje al centro del sofá: completado. Sin novedad, mucha pelusa.',
+    photo('11yW0nVicWb0fZzo'),
+    66,
+  ],
+  ['mcurie', 'Hay reacciones que no necesitan fórmula.', animation('2tKejk7oauPg3Yt4'), 95],
+  [
+    'hgwells',
+    'Una visitante de otro tiempo llegó a la estación. Pide comida, no explicaciones.',
+    photo('0Q2ZmTHQ0vC6NsHa'),
+    140,
+  ],
+  ['brunel', '', photo('1ihNtm9HkcOub9Li'), 215],
+  ['hlamarr', 'Cuando el protocolo falla, queda la súplica.', animation('3Z6CcYkHotdUXQC9'), 330],
+];
 
 /** @returns {Array<[string, string]>} [username, body] of the extra tweets, in a fixed order. */
 function extraTweets() {
@@ -237,7 +285,7 @@ export function buildDemoDataset({ now = new Date() } = {}) {
     },
   }));
 
-  const tweetDocument = (id, username, body, createdAt) => {
+  const tweetDocument = (id, username, body, createdAt, media = null) => {
     const author = byUsername.get(username);
     return {
       id,
@@ -247,6 +295,7 @@ export function buildDemoDataset({ now = new Date() } = {}) {
         authorUsername: username,
         body,
         createdAt,
+        ...(media ? { media } : {}),
       },
     };
   };
@@ -258,6 +307,17 @@ export function buildDemoDataset({ now = new Date() } = {}) {
     ...extraTweets().map(([username, body], index) => [username, body, 90 + index * 47]),
   ].map(([username, body, minutesAgo], index) =>
     tweetDocument(`demo-x${String(index + 1).padStart(3, '0')}`, username, body, ago(minutesAgo)),
+  );
+
+  // Their ids start with `m`, so the `x` ids above never change when this list does.
+  const mediaTweets = MEDIA_TWEETS.map(([username, body, media, minutesAgo], index) =>
+    tweetDocument(
+      `demo-m${String(index + 1).padStart(3, '0')}`,
+      username,
+      body,
+      ago(minutesAgo),
+      media,
+    ),
   );
 
   const seedFollows = seed.follows.map((follow) => {
@@ -273,7 +333,7 @@ export function buildDemoDataset({ now = new Date() } = {}) {
     ...new Map([...addedFollows, ...seedFollows].map((doc) => [doc.id, doc])).values(),
   ];
 
-  return { accounts, users, tweets: [...seedTweets, ...addedTweets], follows };
+  return { accounts, users, tweets: [...seedTweets, ...addedTweets, ...mediaTweets], follows };
 }
 
 // The demo accounts a real account follows with `npm run seed -- --follow <username>`: the ones

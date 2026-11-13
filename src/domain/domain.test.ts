@@ -82,6 +82,17 @@ describe('validators', () => {
     expect(validateTweetBody(`  ${'x'.repeat(MAX_TWEET_LENGTH)}  `)).toBeNull();
   });
 
+  it('lets a tweet with media have no text, but keeps the 280 limit', () => {
+    expect(validateTweetBody('', true)).toBeNull();
+    expect(validateTweetBody('   ', true)).toBeNull();
+    expect(validateTweetBody('x'.repeat(MAX_TWEET_LENGTH), true)).toBeNull();
+    expect(validateTweetBody('x'.repeat(MAX_TWEET_LENGTH + 1), true)).toBe(
+      ErrorCode.TWEET_TOO_LONG,
+    );
+    // Without media the text is still required.
+    expect(validateTweetBody('', false)).toBe(ErrorCode.TWEET_EMPTY);
+  });
+
   it('accepts page sizes from 1 to PAGE_SIZE and nothing else', () => {
     expect(validatePageSize(1)).toBeNull();
     expect(validatePageSize(PAGE_SIZE)).toBeNull();
