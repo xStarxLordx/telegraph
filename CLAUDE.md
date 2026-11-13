@@ -1,6 +1,7 @@
 # Telegraph — X (Twitter) clone · class project
 
-React SPA (Vite, TypeScript + JSX, CSS Modules) + Firebase (Auth, Firestore). Individual project.
+React SPA (Vite, TypeScript + JSX, CSS Modules) + Firebase (Auth, Firestore, Storage). Individual
+project.
 Services, hooks and domain rules are `.ts`; components and pages are `.jsx`. `npm run typecheck`
 (also part of `npm run build`) must pass besides lint and tests.
 Spec: `Clon de X.pdf` in this folder (it is in `.gitignore`, so a fresh clone doesn't have it).
@@ -53,7 +54,8 @@ graded. Commit it with the session's work, never in one final batch commit.
 ## Architecture rules
 
 - UI → hooks → **service contracts** (`authService`, `userService`, `tweetService`,
-  `followService`) provided by `ServicesProvider`. Components never import Firebase or mock data.
+  `followService`, `mediaService`) provided by `ServicesProvider`. Components never import Firebase
+  or mock data.
   The contracts live in `src/interfaces/services.ts`; `src/services/createAppServices.ts` is the
   only place that picks an implementation (Firebase for the app). The mocks stay for the tests.
 - Business rules (validation, limits, sort keys) are pure functions in `src/domain/`, shared by
@@ -78,6 +80,12 @@ graded. Commit it with the session's work, never in one final batch commit.
   mock**: the running app signs in through Firebase, so they can't log in there. Remove that key
   to go back to the seed. One tab at a time: two tabs writing at once overwrite each other
   (mock-only limitation).
+- **A tweet carries at most one picture, GIF or video** (`media: { kind, url, path }`). The UI
+  uploads through `mediaService.upload` and then publishes with the attachment it returns
+  (`useTweetDraft`); only a media tweet may have an empty body (`validateTweetBody(body, hasMedia)`).
+  Accepted types and size limits are pure rules in `src/domain/media.ts` + `constants.ts`.
+  `TweetMedia` is the one component that renders media (compose preview and `TweetCard`). The mock
+  `mediaService` stores nothing: its `blob:` URL stops working on reload.
 - Colors, fonts, radii: CSS custom properties from `design-system.md` only. Themes switch with
   `data-theme` on `<html>`, dark by default.
 - **One app, two palettes:** a theme changes only color-token values. Never branch markup, icons,
@@ -103,9 +111,24 @@ The tracking tables in `docs/` say which tasks are finished; this is only what t
   index in `firestore.indexes.json` (the test fake `src/test/fakeFirestore.ts` rejects a query whose
   index is missing). Changing a document's fields means changing the service, the rules and the
   README together.
-- **Deploy** with `npx firebase-tools deploy --only firestore:rules,firestore:indexes` (project
-  `x-clone-desarrollo1`, from `.firebaserc`); there is no global `firebase` command on this
-  machine. Indexes take minutes to build; until then the lists fail with "requires an index".
+- **`storage.rules` is a third copy of the media limits.** It repeats the types, extensions and
+  sizes of `src/domain/media.ts`, and `firestore.rules` (`isOwnMedia`) pins a tweet's `media.path`
+  and `media.url` to the author's own `tweet-media/<uid>/` folder. `storageRules.test.ts` only
+  compares the rule files' text with the code: nothing runs them without the emulator.
+- **Deploy** with `npx firebase-tools deploy --only firestore:rules,firestore:indexes,storage`
+  (project `x-clone-desarrollo1`, from `.firebaserc`); there is no global `firebase` command on
+  this machine. Indexes take minutes to build; until then the lists fail with "requires an index".
+  The `storage` target fails until Cloud Storage is enabled in the console (the README says it needs
+  the Blaze plan); deploy only the Firestore targets meanwhile. Until `firestore.rules` is
+  redeployed, the old rule rejects every tweet that has `media` (`hasOnly` on the fields).
+- **Media trade-offs and traps.** Downloading fetches the file (`src/utils/downloadFile.ts`), so a
+  Cloud Storage bucket needs a CORS config (`gsutil cors set`, steps in the README); without it
+  the viewer shows "open in a new tab" instead. Viewing and uploading need no CORS. The upload
+  happens before the tweet is written and the rules forbid deleting: a failed publish leaves its
+  file behind, and retrying uploads the file again (`useTweetDraft.publish` doesn't keep the
+  attachment). Only the Admin SDK (or the console) can remove those files. The demo media tweets
+  link to CATAAS and have no `path`: the Admin SDK skips `isOwnMedia`, so no client could write
+  them.
 - **The fake does not run the security rules.** Testing them needs the Firebase emulator, which
   needs a JDK newer than the Java 8 installed here. Until then the rules are verified by reading
   them and by trying the deployed project: a throwaway test that signs in as a demo account and
@@ -147,7 +170,8 @@ The tracking tables in `docs/` say which tasks are finished; this is only what t
   tweet rule is `body.matches('(?s)^.{1,280}$')`: RE2's `.` is one code point and `(?s)` lets it
   match line breaks. Checked on the real project (2026-10-28) with 280 / 281 characters of ASCII,
   `ñ`, emoji, line breaks and mixes. The `fullName` limit in the `users` rule still uses
-  `size()`: only a name with emoji near 50 characters would notice.
+  `size()`: only a name with emoji near 50 characters would notice. The same rule allows an empty
+  body only when the tweet has a valid `media` (`body == ''`).
 - **Feed pagination over chunked queries:** one cursor (the last tweet shown) serves every chunk,
   because all chunks share the same order. Each page asks every chunk for 11 after it, merges and
   keeps the 10 newest (M2-12). Don't add a cursor per chunk: it is redundant. Once my people's
