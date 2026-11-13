@@ -187,7 +187,7 @@ shown as "everyone else's" are not reordered until the feed is reloaded.
 
 ### Demo data
 
-`npm run seed` fills the project with a demo network: 42 accounts, 97 tweets and 200 follows.
+`npm run seed` fills the project with a demo network: 42 accounts, 105 tweets and 200 follows.
 It builds on the mock seed and adds people and tweets for every screen and edge case
 (`scripts/demoData.js`; its tests run the real services over it). Every account has the
 password `telegraph` and the email `<username>@telegraph.test`.
@@ -202,8 +202,13 @@ password `telegraph` and the email `<username>@telegraph.test`.
 | `diez` → following | Two people named Mary Shelley (`mshelley`, `mshelley2`), ordered by username            |
 | `Hypatia`          | A username stored with capitals; it is found in any case                                |
 
-`ada` also has a 280-character tweet, one with emoji and one over several lines. Google
-sign-in can't be seeded: try it with a real Google account.
+`ada` also has a 280-character tweet, one with emoji and one over several lines. Eight tweets
+(by `babbage`, `tesla`, `mshelley`, `verne`, `mcurie`, `hgwells`, `brunel` and `hlamarr`) carry a
+picture or a GIF of about five seconds, one of them with no text. Those files stay on
+[CATAAS](https://cataas.com), a free cat picture service: its repository releases the code under
+the MIT license but keeps the pictures' rights with their authors, so the tweets **link** to them
+and nothing is copied into this repository or the project's Storage. If CATAAS removes a picture,
+its tweet shows a broken image. Google sign-in can't be seeded: try it with a real Google account.
 
 ```bash
 npm run seed -- --dry-run   # show what would be written (needs no credentials)
