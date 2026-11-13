@@ -6,6 +6,7 @@ import { MAX_IMAGE_BYTES } from '../domain/constants';
 import { compareByFullName } from '../domain/sorting';
 import createMockServices from '../services/mock/createMockServices';
 import { DEMO_PASSWORD } from '../services/mock/seed';
+import stubDialog from '../test/dialogStub';
 import renderApp from '../test/renderApp';
 
 let services;
@@ -220,6 +221,39 @@ describe('Compose page with media', () => {
     expect(screen.queryByAltText(/Vista previa/)).toBeNull();
     expect(publish.disabled).toBe(true);
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:preview');
+  });
+});
+
+describe('Media viewer in the feed', () => {
+  let restoreDialog;
+
+  beforeEach(() => {
+    restoreDialog = stubDialog();
+  });
+
+  afterEach(() => {
+    restoreDialog();
+  });
+
+  it('enlarges a picture of the feed, offers to download it and closes', async () => {
+    const user = userEvent.setup();
+    const url = 'https://cataas.com/cat/abc?width=640';
+    await services.tweetService.publish({
+      authorId: ada.id,
+      body: 'Mira',
+      media: { kind: 'image', url },
+    });
+    renderApp('/feed', { services });
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Ampliar: Imagen publicada por Ada Lovelace' }),
+    );
+    const dialog = await screen.findByRole('dialog', { name: 'Imagen publicada por Ada Lovelace' });
+    expect(within(dialog).getByRole('img').getAttribute('src')).toBe(url);
+    expect(within(dialog).getByRole('button', { name: 'Descargar' })).toBeTruthy();
+
+    await user.click(within(dialog).getByRole('button', { name: 'Cerrar visor' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   });
 });
 

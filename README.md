@@ -136,6 +136,10 @@ The types and sizes live in `src/domain/media.ts` and `constants.ts` and are rep
 `storage.rules` (`storageRules.test.ts` fails when they drift). SVG is not accepted: it can carry
 scripts.
 
+Clicking a picture or GIF in a tweet opens it in a viewer (`MediaViewer`, the browser's modal
+`<dialog>`): it fits the screen, closes with Esc, its button or a click outside, hands the focus
+back, and has a **Download** button. Videos use their own controls.
+
 Decisions and trade-offs:
 
 - **Files go to `tweet-media/{uid}/{random}.{ext}`**, and `storage.rules` lets only that account
@@ -149,6 +153,13 @@ Decisions and trade-offs:
   tweet, which only signed-in users can read.
 - **A failed publish leaves its file behind.** The upload happens before the tweet is written and
   the rules forbid deleting, so an orphan can only be removed with the Admin SDK.
+- **Downloading fetches the file** (`src/utils/downloadFile.ts`), because a link's `download`
+  attribute is ignored for another site's files. That needs the host to allow it (CORS). CATAAS
+  does; **a Cloud Storage bucket does not until it is configured**, once per bucket
+  ([Firebase docs](https://firebase.google.com/docs/storage/web/download-files)): save
+  `[{ "origin": ["*"], "method": ["GET"], "maxAgeSeconds": 3600 }]` as `cors.json` and run
+  `gsutil cors set cors.json gs://<bucket>`. Without it the viewer says the file couldn't be
+  downloaded and links to it, so it can be saved from a new tab. Viewing and uploading need no CORS.
 - **A video's length is not limited,** only its size.
 - **The demo tweets only link to their media** (see [Demo data](#demo-data)), so they have no
   `path` and work without Cloud Storage. The Admin SDK that writes them skips the rules.

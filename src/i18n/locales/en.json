@@ -98,7 +98,12 @@
     "media": {
       "image": "Image posted by {{name}}",
       "gif": "GIF posted by {{name}}",
-      "video": "Video posted by {{name}}"
+      "video": "Video posted by {{name}}",
+      "expand": "Enlarge: {{label}}",
+      "download": "Download",
+      "close": "Close viewer",
+      "downloadBlocked": "The file couldn't be downloaded from here.",
+      "openInNewTab": "Open it in a new tab and save it from there."
     }
   },
   "feed": {

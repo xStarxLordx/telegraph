@@ -46,10 +46,26 @@ describe('TweetCard (G-06)', () => {
     expect(image.getAttribute('src')).toBe(media.url);
     expect(image.getAttribute('alt')).toBe('Imagen publicada por Ada Lovelace');
     expect(image.getAttribute('loading')).toBe('lazy');
+    // The picture is a button that opens the viewer, and it comes after the body.
+    const button = image.closest('button');
     const children = [...card.querySelector('article').children];
-    expect(children.indexOf(image)).toBeGreaterThan(
+    expect(children.indexOf(button)).toBeGreaterThan(
       children.indexOf(card.querySelector('article > p:last-of-type')),
     );
+  });
+
+  it('makes a picture or GIF a button that offers to enlarge it, and a video not', () => {
+    const picture = { kind: 'image', url: 'https://cataas.com/cat/abc' };
+    const card = renderTweet('es', { ...tweet, media: picture });
+    expect(card.querySelector('button').getAttribute('aria-label')).toBe(
+      'Ampliar: Imagen publicada por Ada Lovelace',
+    );
+    const gif = renderTweet('en', { ...tweet, media: { kind: 'gif', url: picture.url } });
+    expect(gif.querySelector('button').getAttribute('aria-label')).toBe(
+      'Enlarge: GIF posted by Ada Lovelace',
+    );
+    const video = renderTweet('es', { ...tweet, media: { kind: 'video', url: picture.url } });
+    expect(video.querySelector('button')).toBeNull();
   });
 
   it('shows a GIF like a picture, in the active language', () => {

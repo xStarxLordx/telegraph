@@ -13,7 +13,7 @@ import styles from './TweetCard.module.css';
  */
 function TweetCard({ tweet, timeZone = undefined }) {
   const { t, i18n } = useTranslation();
-  const { authorFullName, authorUsername, body, createdAt, media = undefined } = tweet;
+  const { id, authorFullName, authorUsername, body, createdAt, media = undefined } = tweet;
 
   return (
     <article className={styles.tweet}>
@@ -34,6 +34,8 @@ function TweetCard({ tweet, timeZone = undefined }) {
         <TweetMedia
           media={media}
           label={t(`tweet.media.${media.kind}`, { name: authorFullName })}
+          expandable
+          fileName={`telegraph-${authorUsername}-${id}`}
         />
       )}
     </article>

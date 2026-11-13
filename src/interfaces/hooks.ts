@@ -191,6 +191,14 @@ export interface TweetDraft {
   publish(): Promise<Tweet>;
 }
 
+export interface MediaDownload {
+  /** Saves the file to the device; never throws. */
+  download(): Promise<void>;
+  pending: boolean;
+  /** True after a download that couldn't fetch the file: offer a link to open it instead. */
+  blocked: boolean;
+}
+
 export interface FollowUserState {
   followUser(user: User): Promise<void>;
   isPending(userId: string): boolean;

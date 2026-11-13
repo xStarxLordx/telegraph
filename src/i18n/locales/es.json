@@ -98,7 +98,12 @@
     "media": {
       "image": "Imagen publicada por {{name}}",
       "gif": "GIF publicado por {{name}}",
-      "video": "Video publicado por {{name}}"
+      "video": "Video publicado por {{name}}",
+      "expand": "Ampliar: {{label}}",
+      "download": "Descargar",
+      "close": "Cerrar visor",
+      "downloadBlocked": "No se pudo descargar el archivo desde aquí.",
+      "openInNewTab": "Ábrelo en otra pestaña y guárdalo desde ahí."
     }
   },
   "feed": {

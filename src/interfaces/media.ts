@@ -20,6 +20,9 @@ export interface MediaAttachment {
   path?: string;
 }
 
+/** `saved`: the browser was handed the file. `blocked`: it could not be fetched from here. */
+export type DownloadOutcome = 'saved' | 'blocked';
+
 export interface UploadMediaInput {
   /** The acting user; must be the logged-in one. */
   ownerId: string;
