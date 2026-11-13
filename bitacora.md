@@ -563,3 +563,52 @@ No se editan ni se borran entradas anteriores.
 - Modificados: `README.md`, `CLAUDE.md`, `docs/milestone-1.md`, `docs/milestone-2.md`,
   `docs/milestone-3.md`, `firestore.rules` (comentario), `src/domain/constants.ts` (comentarios),
   `src/i18n/locales/en.json`, `src/services/firebase/firebaseApp.ts` (comentario), `bitacora.md`
+
+---
+
+## 2026-11-12 21:45 (UTC-5) — Revisión del código de media (imágenes, GIF y video) y actualización de CLAUDE.md
+
+- **Herramienta:** Claude Code (CLI)
+- **Modelo:** Claude Sonnet 5.5 (`claude-sonnet-5-5`)
+
+### Mensajes del estudiante (textuales)
+
+> implementé algunas mejoras al app como que se puedan subir imagenes y gifs al app, quiero que revises si hay errores en el código nuevo que hice y que hagas testing en el app para ver que no tengamos bugs para la entrega final
+
+> actualiza el claude.md y la bitacora y haz el commit, push y pr a develop
+
+### Resumen de la respuesta
+
+- **Alcance:** revisión de los commits `d476421`, `607c51a` y `de70e6f` (63 archivos). El PR #12 se
+  mergeó a `develop` durante la sesión, así que lo revisado ya está en `develop`.
+- **Verificación:** `typecheck`, `lint`, `format:check` y `build` terminan con exit 0; 36 archivos y
+  382 tests en verde. El CSS nuevo solo usa tokens del design system. Los tests de Firebase usan el
+  fake, por lo que la subida real a Cloud Storage no queda cubierta.
+- **Sondas temporales en jsdom con el mock** (archivo borrado, árbol limpio): (1) si `publish` falla
+  después de subir el archivo, el reintento lo sube otra vez (2 subidas; el huérfano no se puede
+  borrar desde el cliente); (2) elegir un archivo inválido descarta el válido ya adjunto (decisión
+  de UX documentada en el código); (3) `useObjectUrl` revoca la URL bajo StrictMode si el
+  componente monta con archivo (latente: `ComposePage` monta el selector vacío); (4) un video se
+  adjunta, previsualiza y publica bien.
+- **No se pudo probar en el navegador:** la extensión de Chrome no se conectó (dos intentos). Quedó
+  sin verificar la interfaz en los dos temas, el visor, la descarga y la subida real. Tampoco se
+  verificó si Cloud Storage está activado (plan Blaze), si `storage.rules` y `firestore.rules`
+  están desplegadas ni si el bucket tiene CORS.
+- **CLAUDE.md:** añadidos `mediaService` y Storage al stack y al contrato de servicios, la regla de
+  que solo un tweet con media puede tener cuerpo vacío, `storage.rules` como tercera copia de los
+  límites, el comando de despliegue con `storage`, y las trampas de CORS, de archivos huérfanos y
+  de los tweets demo sin `path`.
+- **Git:** `feature/media-tweets` ya estaba mergeada (PR #12), así que los cambios de documentación
+  van en `fix/claude-md-media-notes`, creada desde `develop`, con commit, push y PR a `develop` a
+  pedido del estudiante.
+- **Pendiente, decisión del estudiante:** (1) esta bitácora no tiene entradas de las sesiones del
+  12/11 en que se implementó la media (G-11, si hubo IA); (2) probar en el navegador y contra
+  Firebase real antes de la entrega; (3) decidir si se corrige el reintento que sube el archivo
+  dos veces.
+- No se modificó el código de la aplicación.
+
+### Archivos creados o modificados
+
+- Modificados: `CLAUDE.md`, `bitacora.md`
+- Fuera del repo o ignorados: una config de Vite con servicios mock y los archivos de prueba, en
+  una carpeta temporal; `dist/` regenerado por `npm run build` (ignorado por git)
