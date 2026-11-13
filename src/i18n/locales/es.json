@@ -31,7 +31,8 @@
     "myTweets": "Mis tweets",
     "following": "Siguiendo",
     "followers": "Seguidores",
-    "tweet": "Tweet"
+    "tweet": "Tweet",
+    "search": "Buscar"
   },
   "fields": {
     "fullName": "Nombre completo",
@@ -69,7 +70,7 @@
     "subtitle": "Tu estación de telégrafo personal.",
     "composePrompt": "¿Qué quieres contarle al mundo hoy?",
     "tweet": "Tweet",
-    "feedHint": "Tus tweets y los de quienes sigues.",
+    "feedHint": "Tus tweets y los de quienes sigues primero; después, lo último de la red.",
     "myTweetsHint": "Todo lo que has publicado."
   },
   "compose": {
@@ -82,28 +83,61 @@
     "submit": "Publicar",
     "published": "Tweet publicado.",
     "nearLimitAnnouncement": "Quedan pocos caracteres.",
-    "overLimitAnnouncement": "El tweet supera el límite de caracteres."
+    "overLimitAnnouncement": "El tweet supera el límite de caracteres.",
+    "media": {
+      "add": "Añadir foto, GIF o video",
+      "change": "Cambiar archivo",
+      "remove": "Quitar archivo",
+      "hint": "Foto JPG, PNG o WebP (hasta {{imageMax}} MB), GIF (hasta {{gifMax}} MB) o video MP4 o WebM (hasta {{videoMax}} MB). El texto es opcional si adjuntas algo.",
+      "preview": "Vista previa: {{name}}",
+      "uploading": "Subiendo archivo…",
+      "uploadProgress": "Subiendo: {{percent}} %"
+    }
+  },
+  "tweet": {
+    "media": {
+      "image": "Imagen publicada por {{name}}",
+      "gif": "GIF publicado por {{name}}",
+      "video": "Video publicado por {{name}}",
+      "expand": "Ampliar: {{label}}",
+      "download": "Descargar",
+      "close": "Cerrar visor",
+      "downloadBlocked": "No se pudo descargar el archivo desde aquí.",
+      "openInNewTab": "Ábrelo en otra pestaña y guárdalo desde ahí."
+    }
   },
   "feed": {
     "title": "Feed",
-    "subtitle": "Tus tweets y los de quienes sigues, del más reciente al más antiguo.",
-    "emptyTitle": "Tu feed está vacío",
-    "emptyMessage": "Publica tu primer tweet o sigue a alguien para ver sus despachos aquí.",
-    "emptyAction": "Ver mis seguidores"
+    "subtitle": "Primero tus tweets y los de quienes sigues; después, los demás, del más reciente al más antiguo.",
+    "emptyTitle": "Aún no hay tweets",
+    "emptyMessage": "Publica el primero o busca personas para seguir.",
+    "emptyAction": "Buscar personas",
+    "loadMore": "Cargar más",
+    "progress": "Mostrando {{shown}} de {{total}} tweets",
+    "end_one": "Has llegado al final: {{count}} tweet.",
+    "end_other": "Has llegado al final: {{count}} tweets."
   },
   "following": {
     "title": "Siguiendo",
     "subtitle_one": "Sigues a {{count}} persona, en orden alfabético.",
     "subtitle_other": "Sigues a {{count}} personas, en orden alfabético.",
     "emptyTitle": "Aún no sigues a nadie",
-    "emptyMessage": "Empieza por seguir de vuelta a tus seguidores."
+    "emptyMessage": "Busca personas y empieza a seguirlas.",
+    "titleOf": "Seguidos por {{name}}",
+    "subtitleOf_one": "@{{username}} sigue a {{count}} persona, en orden alfabético.",
+    "subtitleOf_other": "@{{username}} sigue a {{count}} personas, en orden alfabético.",
+    "emptyTitleOf": "@{{username}} aún no sigue a nadie"
   },
   "followers": {
     "title": "Seguidores",
     "subtitle_one": "{{count}} persona te sigue, en orden alfabético.",
     "subtitle_other": "{{count}} personas te siguen, en orden alfabético.",
     "emptyTitle": "Aún no tienes seguidores",
-    "emptyMessage": "Publica tus primeros despachos para que te encuentren."
+    "emptyMessage": "Publica tus primeros despachos para que te encuentren.",
+    "titleOf": "Seguidores de {{name}}",
+    "subtitleOf_one": "{{count}} persona sigue a @{{username}}, en orden alfabético.",
+    "subtitleOf_other": "{{count}} personas siguen a @{{username}}, en orden alfabético.",
+    "emptyTitleOf": "@{{username}} aún no tiene seguidores"
   },
   "follow": {
     "follow": "Seguir",
@@ -123,7 +157,8 @@
     "noTweets": "@{{username}} aún no ha publicado nada",
     "notFoundTitle": "Usuario no encontrado",
     "notFoundMessage": "No existe ninguna cuenta con el nombre de usuario @{{username}}.",
-    "tweets": "Tweets"
+    "tweets": "Tweets",
+    "viewProfile": "Ver perfil"
   },
   "pagination": {
     "label": "Paginación",
@@ -162,6 +197,32 @@
     "validation/password-too-short": "La contraseña debe tener al menos {{passwordMin}} caracteres.",
     "validation/tweet-empty": "El tweet no puede estar vacío.",
     "validation/tweet-too-long": "El tweet puede tener como máximo {{tweetMax}} caracteres.",
+    "validation/media-unsupported": "Ese archivo no es compatible. Usa una foto JPG, PNG o WebP, un GIF o un video MP4 o WebM.",
+    "validation/media-too-large": "El archivo es demasiado grande. Máximo: {{imageMax}} MB para fotos, {{gifMax}} MB para GIF y {{videoMax}} MB para video.",
     "validation/passwords-mismatch": "Las contraseñas no coinciden."
+  },
+  "followByUsername": {
+    "title": "Seguir por nombre de usuario",
+    "placeholder": "ada",
+    "searchLink": "¿No sabes el usuario? Busca personas."
+  },
+  "search": {
+    "title": "Buscar personas",
+    "hint": "Encuentra a quién seguir por su nombre o su nombre de usuario.",
+    "label": "Nombre o usuario",
+    "placeholder": "Ada Lovelace o @ada",
+    "submit": "Buscar",
+    "results": "Resultados de la búsqueda",
+    "subtitle_one": "{{count}} resultado para «{{term}}», en orden alfabético.",
+    "subtitle_other": "{{count}} resultados para «{{term}}», en orden alfabético.",
+    "promptTitle": "Busca a alguien",
+    "promptMessage": "Escribe parte de un nombre o de un nombre de usuario para ver quién coincide.",
+    "noResultsTitle": "Nadie coincide con «{{term}}»",
+    "noResultsMessage": "Prueba con otro nombre o usuario, o con menos letras.",
+    "recommended": "Personas que quizá quieras seguir",
+    "matches": "Coincidencias",
+    "noSuggestions": "Nadie coincide todavía.",
+    "suggestionsCount_one": "{{count}} sugerencia disponible.",
+    "suggestionsCount_other": "{{count}} sugerencias disponibles."
   }
 }

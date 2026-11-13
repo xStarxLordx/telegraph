@@ -2,23 +2,29 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
 import Button from '../components/Button/Button';
 import Card from '../components/Card/Card';
+import MediaPicker from '../components/MediaPicker/MediaPicker';
 import Notice from '../components/Notice/Notice';
 import PageHeader from '../components/PageHeader/PageHeader';
 import { TextArea } from '../components/TextField/TextField';
 import { useToast } from '../components/Toast/ToastContext';
 import useAsyncAction from '../hooks/useAsyncAction';
 import useTweetDraft, { CounterState } from '../hooks/useTweetDraft';
+import { ERROR_MESSAGE_VALUES } from '../i18n/errorKey';
 import useErrorMessage from '../i18n/useErrorMessage';
 import { Paths } from '../routes/paths';
 import styles from './ComposePage.module.css';
 
-/** /compose (R1.4): multiline text, live n / 280 counter and "Publicar". */
+/**
+ * /compose (R1.4): multiline text, live n / 280 counter and "Publicar". A picture, GIF or video
+ * can be attached; then the text is optional.
+ */
 function ComposePage() {
   const { t } = useTranslation();
   const errorMessage = useErrorMessage();
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const { text, setText, counter, publish } = useTweetDraft();
+  const { text, setText, counter, media, selectMedia, mediaError, uploadProgress, publish } =
+    useTweetDraft();
   const { run, pending, error } = useAsyncAction(publish);
 
   const handleSubmit = async (event) => {
@@ -61,6 +67,16 @@ function ComposePage() {
             hint={counterText}
             placeholder={t('compose.placeholder')}
             rows={6}
+          />
+          <MediaPicker
+            id="compose-media"
+            label={t('compose.media.add')}
+            file={media}
+            onChange={selectMedia}
+            error={mediaError ? errorMessage(mediaError) : ''}
+            hint={t('compose.media.hint', ERROR_MESSAGE_VALUES)}
+            disabled={pending}
+            progress={uploadProgress}
           />
           <p className="visually-hidden" aria-live="polite">
             {announcement ?? ''}

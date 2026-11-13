@@ -31,7 +31,7 @@ items per page (G-09).
 ### M3-01 · Firestore cursor pagination
 
 **Description:** Firestore has no offset in the web SDK. Implement the services' `PageRequest` →
-`Page` contract (`src/services/contracts.js`) with `limit(pageSize)` + `startAfter(cursor)`,
+`Page` contract (`src/interfaces/pagination.ts`) with `limit(pageSize)` + `startAfter(cursor)`,
 encoding the last document as the opaque `nextCursor`, and `getCountFromServer` for `total`
 ("Page X of Y"). Write it once as a shared helper used by every Firebase list method. The UI
 hook `usePaginatedList` (M1-09) and the `Pagination` component stay unchanged.
@@ -45,7 +45,7 @@ or gaps.
 ### M3-02 · Following list with real data
 
 **Description:** `/following` queries `follows where followerId == me orderBy followeeFullNameLower`
-through `usePaginatedQuery`. Each item links to `/users/:username`. Needs a composite index.
+through `usePaginatedList`. Each item links to `/users/:username`. Needs a composite index.
 **Covers:** R3.1, R1.5.
 **Depends on:** M3-01.
 **Done when:** the order is alphabetical across all pages (accents and upper/lower case don't
@@ -84,7 +84,7 @@ profile never shows the button.
 ### M3-06 · Followers and following lists of any user
 
 **Description:** Add routes `/users/:username/followers` and `/users/:username/following` that
-reuse the list pages, parameterized by user (one `UserListPage` with a `mode` prop, not two copies
+reuse the list pages, parameterized by user (one `FollowListPage` with a `kind` prop, not two copies
 of the same code). `/followers` and `/following` become my own lists. "Seguir" buttons follow the
 same rules as M3-03.
 **Covers:** R3.6.

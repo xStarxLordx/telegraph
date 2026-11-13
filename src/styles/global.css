@@ -58,6 +58,11 @@ select {
   border: 0;
 }
 
+/* While a modal <dialog> (the media viewer) is open, the page behind it doesn't scroll. */
+html:has(dialog[open]) {
+  overflow: hidden;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

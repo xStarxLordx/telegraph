@@ -15,7 +15,9 @@ describe('ServicesProvider', () => {
         <ServiceNames />
       </ServicesProvider>,
     );
-    expect(html).toBe('authService,followService,resetMockData,tweetService,userService');
+    expect(html).toBe(
+      'authService,followService,mediaService,resetMockData,tweetService,userService',
+    );
   });
 
   it('fails loudly when used outside the provider', () => {

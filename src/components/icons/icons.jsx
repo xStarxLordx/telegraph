@@ -88,10 +88,53 @@ export function FollowersIcon() {
   );
 }
 
+export function SearchIcon() {
+  return (
+    <StrokeIcon>
+      <circle cx="11" cy="11" r="6.5" />
+      <path d="M16 16l5 5" />
+    </StrokeIcon>
+  );
+}
+
 export function PenIcon() {
   return (
     <StrokeIcon size={18} strokeWidth={2.2}>
       <path d="M4 20l4-1 11-11-3-3L5 16z" />
+    </StrokeIcon>
+  );
+}
+
+export function ImageIcon() {
+  return (
+    <StrokeIcon size={18} strokeWidth={2}>
+      <rect x="3" y="4.5" width="18" height="15" rx="2" />
+      <circle cx="8.5" cy="9.5" r="1.5" />
+      <path d="M21 16l-5-5-8 8.5" />
+    </StrokeIcon>
+  );
+}
+
+export function ExpandIcon() {
+  return (
+    <StrokeIcon size={18} strokeWidth={2}>
+      <path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7" />
+    </StrokeIcon>
+  );
+}
+
+export function DownloadIcon() {
+  return (
+    <StrokeIcon size={18} strokeWidth={2}>
+      <path d="M12 4v11M7 11l5 5 5-5M5 20h14" />
+    </StrokeIcon>
+  );
+}
+
+export function CloseIcon() {
+  return (
+    <StrokeIcon size={18} strokeWidth={2}>
+      <path d="M6 6l12 12M18 6L6 18" />
     </StrokeIcon>
   );
 }

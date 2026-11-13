@@ -35,6 +35,23 @@ const followersOf = (username) =>
 const tweetsOf = (username) => collectPages((page) => tweets.listByAuthor(demoUid(username), page));
 const feedOf = (username) => collectPages((page) => tweets.listFeed(demoUid(username), page));
 
+const timeOf = (tweet) => new Date(tweet.createdAt).getTime();
+
+function expectPriorityFirst(items, priority) {
+  const flags = items.map((tweet) => priority.has(tweet.authorId));
+  const firstOther = flags.indexOf(false);
+  const followed = firstOther === -1 ? items : items.slice(0, firstOther);
+  const others = firstOther === -1 ? [] : items.slice(firstOther);
+  expect(flags.slice(0, followed.length).every(Boolean)).toBe(true);
+  expect(flags.slice(followed.length).some(Boolean)).toBe(false);
+  [followed, others].forEach((group) => {
+    group.slice(1).forEach((tweet, index) => {
+      expect(timeOf(tweet)).toBeLessThanOrEqual(timeOf(group[index]));
+    });
+  });
+  return { followed, others };
+}
+
 beforeEach(() => {
   fakeFirestore.reset();
   dataset.users.forEach(({ id, data }) => fakeFirestore.set(`users/${id}`, data));
@@ -80,7 +97,7 @@ describe('the dataset is well formed', () => {
       const profile = dataset.users.find((user) => user.data.uid === data.authorId).data;
       expect(data.authorUsername, id).toBe(profile.username);
       expect(data.authorFullName, id).toBe(profile.fullName);
-      expect(validateTweetBody(data.body), id).toBeNull();
+      expect(validateTweetBody(data.body, Boolean(data.media)), id).toBeNull();
       expect(data.body, id).toBe(data.body.trim());
       expect(data.createdAt.getTime()).toBeLessThanOrEqual(NOW.getTime());
     });
@@ -111,8 +128,40 @@ describe('the dataset is well formed', () => {
       ...new Set(docs.map(({ data }) => Object.keys(data).sort().join())),
     ];
     expect(fieldsOf(dataset.users)).toEqual([[...allowedFields('users')].sort().join()]);
-    expect(fieldsOf(dataset.tweets)).toEqual([[...allowedFields('tweets')].sort().join()]);
     expect(fieldsOf(dataset.follows)).toEqual([[...allowedFields('follows')].sort().join()]);
+    // A tweet has `media` only when it has a picture or a GIF: either shape, and nothing else.
+    const allowed = allowedFields('tweets');
+    const shapes = [allowed.filter((field) => field !== 'media'), allowed].map((fields) =>
+      [...fields].sort().join(),
+    );
+    fieldsOf(dataset.tweets).forEach((shape) => expect(shapes).toContain(shape));
+  });
+
+  it('has tweets with a picture or a GIF, linked from CATAAS (never copied)', () => {
+    const withMedia = dataset.tweets.filter(({ data }) => data.media);
+    expect(withMedia.length).toBeGreaterThanOrEqual(6);
+    expect(new Set(withMedia.map(({ data }) => data.media.kind))).toEqual(
+      new Set(['image', 'gif']),
+    );
+    withMedia.forEach(({ id, data }) => {
+      // A link has no Storage `path`; the Admin SDK skips the rules that ask for one.
+      expect(Object.keys(data.media).sort(), id).toEqual(['kind', 'url']);
+      expect(data.media.url, id).toMatch(
+        /^https:\/\/cataas\.com\/cat\/[A-Za-z0-9]+(\?width=\d+)?$/,
+      );
+    });
+    expect(withMedia.some(({ data }) => data.body === '')).toBe(true);
+    // Their ids don't disturb the earlier ones, and their authors aren't accounts whose tweet
+    // counts the scenarios below pin.
+    expect(withMedia.every(({ id }) => /^demo-m\d{3}$/.test(id))).toBe(true);
+    const pinned = ['ada', 'diez', 'once', 'novato', 'telegrafista', 'Hypatia'];
+    expect(withMedia.some(({ data }) => pinned.includes(data.authorUsername))).toBe(false);
+  });
+
+  it('serves those tweets, media included, through the real tweet service', async () => {
+    const { data } = dataset.tweets.find(({ id }) => id === 'demo-m001');
+    const items = (await tweetsOf(data.authorUsername)).flatMap((page) => page.items);
+    expect(items.find((tweet) => tweet.id === 'demo-m001').media).toEqual(data.media);
   });
 
   it('is the same every time for the same moment (so seeding twice changes nothing)', () => {
@@ -147,10 +196,19 @@ describe('what each demo account shows', () => {
   it('@novato has nothing: every empty state', async () => {
     const empty = { items: [], nextCursor: null, total: 0 };
     expect(await tweets.listByAuthor(demoUid('novato'))).toEqual(empty);
-    expect(await tweets.listFeed(demoUid('novato'))).toEqual(empty);
     expect(await follows.listFollowing(demoUid('novato'))).toEqual(empty);
     expect(await follows.listFollowers(demoUid('novato'))).toEqual(empty);
     expect(await follows.getCounts(demoUid('novato'))).toEqual({ followers: 0, following: 0 });
+  });
+
+  it('@novato follows nobody, yet the feed shows everyone else’s tweets', async () => {
+    const pages = await feedOf('novato');
+    const items = pages.flatMap((page) => page.items);
+
+    expect(items).toHaveLength(dataset.tweets.length);
+    expect(pages.at(-1).total).toBe(dataset.tweets.length);
+    expect(sizesOf(pages)[0]).toBe(PAGE_SIZE);
+    expectPriorityFirst(items, new Set([demoUid('novato')]));
   });
 
   it('@telegrafista follows more than 30 people, and the feed pages across chunks in order', async () => {
@@ -164,17 +222,16 @@ describe('what each demo account shows', () => {
       demoUid('telegrafista'),
       ...(await followingOf('telegrafista')).flatMap((page) => page.items.map((u) => u.id)),
     ]);
-    const expectedCount = dataset.tweets.filter(({ data }) => followed.has(data.authorId)).length;
-    expect(items).toHaveLength(expectedCount);
-    expect(pages.at(-1).total).toBe(expectedCount);
+    const followedCount = dataset.tweets.filter(({ data }) => followed.has(data.authorId)).length;
+    expect(items).toHaveLength(dataset.tweets.length);
+    expect(pages.at(-1).total).toBe(dataset.tweets.length);
     expect(new Set(items.map((tweet) => tweet.id)).size).toBe(items.length);
-    items.slice(1).forEach((tweet, index) => {
-      expect(tweet.createdAt.getTime()).toBeLessThanOrEqual(items[index].createdAt.getTime());
-    });
+    const groups = expectPriorityFirst(items, followed);
+    expect(groups.followed).toHaveLength(followedCount);
     const feedQueries = fakeFirestore.state.queries.filter((query) =>
       query.wheres.some(({ operator }) => operator === 'in'),
     );
-    expect(feedQueries.length).toBeGreaterThanOrEqual(2 * pages.length);
+    expect(feedQueries.length).toBeGreaterThanOrEqual(2);
   });
 
   it('puts the two Mary Shelleys next to each other, ordered by username', async () => {
@@ -228,11 +285,14 @@ describe('--follow: a real account following demo accounts', () => {
     });
   });
 
-  it('fills several feed pages, newest first, and leaves demo accounts to follow', async () => {
+  it('fills several feed pages, followed accounts first, and leaves demo accounts to follow', async () => {
     const pages = await collectPages((page) => tweets.listFeed('real-uid', page));
     expect(pages.length).toBeGreaterThan(2);
-    const dates = pages.flatMap((page) => page.items.map((tweet) => Date.parse(tweet.createdAt)));
-    expect(dates).toEqual([...dates].sort((a, b) => b - a));
+    const priority = new Set(['real-uid', ...realFollows.map(({ data }) => data.followeeId)]);
+    expectPriorityFirst(
+      pages.flatMap((page) => page.items),
+      priority,
+    );
 
     const following = await collectPages((page) => follows.listFollowing('real-uid', page));
     expect(sizesOf(following)).toEqual([PAGE_SIZE, PAGE_SIZE, realFollows.length - 2 * PAGE_SIZE]);

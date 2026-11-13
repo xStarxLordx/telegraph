@@ -3,14 +3,17 @@ import { Link } from 'react-router';
 import { useCurrentUser } from '../auth/AuthContext';
 import { LinkButton } from '../components/Button/Button';
 import Card from '../components/Card/Card';
+import FeedList from '../components/FeedList/FeedList';
+import FollowByUsernameForm from '../components/FollowByUsernameForm/FollowByUsernameForm';
 import { FeedIcon, PenIcon, TweetsIcon } from '../components/icons/icons';
 import PageHeader from '../components/PageHeader/PageHeader';
 import { Paths, userPath } from '../routes/paths';
 import styles from './HomePage.module.css';
 
 /**
- * Home (R1.3): welcome, the prominent "Tweet" link and shortcuts. The followers / following
- * gauges live in the app shell's aside (SocialPanel), so they are on this page too.
+ * Home (R1.3): welcome, the prominent "Tweet" link, shortcuts and, below them, the feed (R1.8).
+ * The followers / following gauges live in the app shell's aside (SocialPanel), so they are on
+ * this page too.
  */
 function HomePage() {
   const { t } = useTranslation();
@@ -45,7 +48,14 @@ function HomePage() {
         </Link>
       </div>
 
-      {/* Slot reserved for "Follow by username" (M2-10). */}
+      <FollowByUsernameForm />
+
+      <section className={styles.feed} aria-labelledby="home-feed-title">
+        <h2 id="home-feed-title" className={styles.feedTitle}>
+          {t('feed.title')}
+        </h2>
+        <FeedList />
+      </section>
     </>
   );
 }
