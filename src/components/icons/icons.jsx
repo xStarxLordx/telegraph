@@ -105,6 +105,16 @@ export function PenIcon() {
   );
 }
 
+export function ImageIcon() {
+  return (
+    <StrokeIcon size={18} strokeWidth={2}>
+      <rect x="3" y="4.5" width="18" height="15" rx="2" />
+      <circle cx="8.5" cy="9.5" r="1.5" />
+      <path d="M21 16l-5-5-8 8.5" />
+    </StrokeIcon>
+  );
+}
+
 export function GoogleIcon() {
   return (
     <StrokeIcon size={18} strokeWidth={2.2}>

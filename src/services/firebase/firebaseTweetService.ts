@@ -41,6 +41,7 @@ function toTweet(snapshot: DocumentSnapshot): Tweet {
     authorUsername: data.authorUsername,
     body: data.body,
     createdAt: data.createdAt.toDate(),
+    ...(data.media ? { media: data.media } : {}),
   };
 }
 
@@ -123,9 +124,9 @@ export default function createFirebaseTweetService({
   };
 
   return {
-    publish: withMappedErrors(async ({ authorId, body }) => {
+    publish: withMappedErrors(async ({ authorId, body, media }) => {
       const author = await requireActor({ auth, db }, authorId);
-      const error = validateTweetBody(body);
+      const error = validateTweetBody(body, Boolean(media));
       if (error) throw new ServiceError(error, { field: 'body' });
       const reference = await addDoc(tweets(), {
         authorId,
@@ -133,6 +134,8 @@ export default function createFirebaseTweetService({
         authorUsername: author.username,
         body: body.trim(),
         createdAt: serverTimestamp(),
+        // Firestore rejects `undefined`, so a tweet without media has no `media` field at all.
+        ...(media ? { media } : {}),
       });
       return toTweet(await getDoc(reference));
     }),

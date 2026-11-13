@@ -429,6 +429,17 @@ describe('mock services', () => {
       );
     });
 
+    it('publishes a tweet that is only media, and keeps the attachment in every list', async () => {
+      const media = { kind: 'gif' as const, url: 'blob:telegraph-mock/gato.gif' };
+      const tweet = await services.tweetService.publish({ authorId: ada.id, body: '  ', media });
+      expect(tweet).toMatchObject({ body: '', media });
+      expect((await services.tweetService.listByAuthor(ada.id)).items[0].media).toEqual(media);
+      expect((await services.tweetService.listFeed(ada.id)).items[0].media).toEqual(media);
+      // A tweet without media doesn't get an empty `media` field.
+      const plain = await services.tweetService.publish({ authorId: ada.id, body: 'solo texto' });
+      expect('media' in plain).toBe(false);
+    });
+
     it('lists an author newest first across pages', async () => {
       const { items, pages } = await collectAllPages((page) =>
         services.tweetService.listByAuthor(ada.id, page),

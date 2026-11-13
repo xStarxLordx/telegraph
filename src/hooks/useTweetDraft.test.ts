@@ -7,6 +7,15 @@ describe('getTweetCounter', () => {
     expect(getTweetCounter('   \n ')).toMatchObject({ canPublish: false });
   });
 
+  it('can publish without text once media is attached, but never over the limit', () => {
+    expect(getTweetCounter('', true)).toMatchObject({ count: 0, canPublish: true });
+    expect(getTweetCounter('   ', true)).toMatchObject({ canPublish: true });
+    expect(getTweetCounter('a'.repeat(281), true)).toMatchObject({
+      state: 'over',
+      canPublish: false,
+    });
+  });
+
   it('counts code points, so an emoji counts 1', () => {
     expect(getTweetCounter('🚂🚂').count).toBe(2);
     expect(getTweetCounter('🚂'.repeat(280))).toMatchObject({ count: 280, canPublish: true });

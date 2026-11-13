@@ -21,6 +21,10 @@ const FIREBASE_ERRORS: Readonly<Record<string, FirebaseErrorMapping>> = Object.f
   'permission-denied': { code: ErrorCode.PERMISSION_DENIED },
   unauthenticated: { code: ErrorCode.NOT_AUTHENTICATED },
   unavailable: { code: ErrorCode.NETWORK_UNAVAILABLE },
+  // Cloud Storage
+  'storage/unauthorized': { code: ErrorCode.PERMISSION_DENIED },
+  'storage/unauthenticated': { code: ErrorCode.NOT_AUTHENTICATED },
+  'storage/retry-limit-exceeded': { code: ErrorCode.NETWORK_UNAVAILABLE },
 });
 
 /** Maps whatever a Firebase call threw; a ServiceError is returned as it is. */

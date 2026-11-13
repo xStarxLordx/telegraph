@@ -34,6 +34,9 @@ export const ErrorCode = Object.freeze({
   PASSWORD_TOO_SHORT: 'validation/password-too-short',
   TWEET_EMPTY: 'validation/tweet-empty',
   TWEET_TOO_LONG: 'validation/tweet-too-long',
+  /** The file isn't one of the image, GIF or video formats a tweet accepts (or it is empty). */
+  MEDIA_UNSUPPORTED: 'validation/media-unsupported',
+  MEDIA_TOO_LARGE: 'validation/media-too-large',
 });
 
 export class ServiceError extends Error {

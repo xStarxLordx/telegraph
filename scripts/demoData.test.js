@@ -97,7 +97,7 @@ describe('the dataset is well formed', () => {
       const profile = dataset.users.find((user) => user.data.uid === data.authorId).data;
       expect(data.authorUsername, id).toBe(profile.username);
       expect(data.authorFullName, id).toBe(profile.fullName);
-      expect(validateTweetBody(data.body), id).toBeNull();
+      expect(validateTweetBody(data.body, Boolean(data.media)), id).toBeNull();
       expect(data.body, id).toBe(data.body.trim());
       expect(data.createdAt.getTime()).toBeLessThanOrEqual(NOW.getTime());
     });
@@ -128,8 +128,13 @@ describe('the dataset is well formed', () => {
       ...new Set(docs.map(({ data }) => Object.keys(data).sort().join())),
     ];
     expect(fieldsOf(dataset.users)).toEqual([[...allowedFields('users')].sort().join()]);
-    expect(fieldsOf(dataset.tweets)).toEqual([[...allowedFields('tweets')].sort().join()]);
     expect(fieldsOf(dataset.follows)).toEqual([[...allowedFields('follows')].sort().join()]);
+    // A tweet has `media` only when it has a picture or a GIF: either shape, and nothing else.
+    const allowed = allowedFields('tweets');
+    const shapes = [allowed.filter((field) => field !== 'media'), allowed].map((fields) =>
+      [...fields].sort().join(),
+    );
+    fieldsOf(dataset.tweets).forEach((shape) => expect(shapes).toContain(shape));
   });
 
   it('is the same every time for the same moment (so seeding twice changes nothing)', () => {

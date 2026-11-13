@@ -4,6 +4,7 @@ import { createMemoryStorage } from '../../utils/storage';
 import createMockAuthService from './mockAuthService';
 import createMockDatabase from './mockDatabase';
 import createMockFollowService from './mockFollowService';
+import createMockMediaService from './mockMediaService';
 import createMockTweetService from './mockTweetService';
 import createMockUserService from './mockUserService';
 
@@ -25,6 +26,7 @@ export default function createMockServices({
     userService: createMockUserService(deps),
     tweetService: createMockTweetService(deps),
     followService: createMockFollowService(deps),
+    mediaService: createMockMediaService(deps),
     resetMockData: () => db.reset(),
   };
 }

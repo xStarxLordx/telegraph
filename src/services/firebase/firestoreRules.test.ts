@@ -31,10 +31,40 @@ describe('firestore.rules', () => {
 
   it('allows exactly the fields a published tweet has', async () => {
     const tweets = createFirebaseTweetService(fakeDeps(auth));
-    const { id } = await tweets.publish({ authorId: ADA.uid, body: 'hola' });
+    const media = {
+      kind: 'image' as const,
+      url: 'https://firebasestorage.googleapis.com/v0/b/b/o/tweet-media%2Fuid-ada%2Fab-12.png?alt=media&token=ab-12',
+      path: 'tweet-media/uid-ada/ab-12.png',
+    };
+    const { id } = await tweets.publish({ authorId: ADA.uid, body: 'hola', media });
 
     expect(allowedFields('tweets').sort()).toEqual(
       Object.keys(fakeFirestore.get(`tweets/${id}`) ?? {}).sort(),
+    );
+  });
+
+  it('requires every tweet field but `media`, which only a tweet with media has', async () => {
+    const tweets = createFirebaseTweetService(fakeDeps(auth));
+    const { id } = await tweets.publish({ authorId: ADA.uid, body: 'hola' });
+
+    const required = allowedFields('tweets').filter((field) => field !== 'media');
+    expect(Object.keys(fakeFirestore.get(`tweets/${id}`) ?? {}).sort()).toEqual(required.sort());
+    expect(blockOf('tweets')).toContain(
+      "request.resource.data.keys().hasAll(\n          ['authorId', 'authorFullName', 'authorUsername', 'body', 'createdAt'])",
+    );
+  });
+
+  it('lets the body be empty only when the tweet has media, and keeps the 280 limit', () => {
+    const tweetRule = blockOf('tweets');
+    expect(tweetRule).toContain(
+      "('media' in request.resource.data && request.resource.data.body == '')",
+    );
+    expect(tweetRule).toContain("body.matches('(?s)^.{1,280}$')");
+  });
+
+  it('only accepts media that is the author’s own file, through isOwnMedia', () => {
+    expect(blockOf('tweets')).toContain(
+      'isOwnMedia(request.resource.data.media, request.auth.uid)',
     );
   });
 

@@ -1,8 +1,9 @@
 // The single place that decides which service implementation the app uses: Firebase for all
-// four services. The mocks (src/services/mock) stay for the tests; nothing else changes.
-import { getFirebaseAuth, getFirebaseDb } from './firebase/firebaseApp';
+// five services. The mocks (src/services/mock) stay for the tests; nothing else changes.
+import { getFirebaseAuth, getFirebaseDb, getFirebaseStorage } from './firebase/firebaseApp';
 import createFirebaseAuthService from './firebase/firebaseAuthService';
 import createFirebaseFollowService from './firebase/firebaseFollowService';
+import createFirebaseMediaService from './firebase/firebaseMediaService';
 import createFirebaseTweetService from './firebase/firebaseTweetService';
 import createFirebaseUserService from './firebase/firebaseUserService';
 import type { Services } from '../interfaces/services';
@@ -14,5 +15,6 @@ export default function createAppServices(): Services {
     userService: createFirebaseUserService(deps),
     tweetService: createFirebaseTweetService(deps),
     followService: createFirebaseFollowService(deps),
+    mediaService: createFirebaseMediaService({ auth: deps.auth, storage: getFirebaseStorage() }),
   };
 }

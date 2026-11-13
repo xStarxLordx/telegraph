@@ -17,7 +17,7 @@ The app has these pages:
 | `/register`                  | Create an account (full name, username, email, password)                                    |
 | `/choose-username`           | First Google login: pick a username before entering the app                                 |
 | `/`                          | Home: welcome, the "Tweet" link, a follow-by-username form and the feed; gauges on the side |
-| `/compose`                   | Write a tweet with a live `n / 280` counter and publish it                                  |
+| `/compose`                   | Write a tweet with a live `n / 280` counter, attach a picture, GIF or video, and publish it |
 | `/feed`                      | My tweets and those of the people I follow first, then everyone else's, newest first        |
 | `/search`                    | Search people by name or username (with suggestions), alphabetical, with "Follow"           |
 | `/following`                 | People I follow, alphabetical by full name                                                  |
@@ -40,7 +40,8 @@ a 404 page.
 - [i18next](https://www.i18next.com/) + `react-i18next` for Spanish / English
 - CSS Modules over the design tokens in `src/styles/tokens.css`
 - [Vitest](https://vitest.dev/) + [Testing Library](https://testing-library.com/) (jsdom) for tests
-- [Firebase](https://firebase.google.com/): Authentication and Cloud Firestore (from Milestone 2)
+- [Firebase](https://firebase.google.com/): Authentication and Cloud Firestore (from Milestone 2),
+  and Cloud Storage for the pictures, GIFs and videos of tweets
 
 ## Getting started
 
@@ -53,7 +54,7 @@ npm run dev
 ```
 
 Open <http://localhost:5173>. The app talks to Firebase (Authentication + Cloud Firestore) for
-accounts, tweets and follows. If a `VITE_FIREBASE_*` variable is missing the app doesn't start:
+accounts, tweets and follows, and to Cloud Storage for attached media. If a `VITE_FIREBASE_*` variable is missing the app doesn't start:
 the console names the missing variables.
 
 The **mock services** in `src/services/mock/` (an in-memory copy of the backend with demo
@@ -64,25 +65,31 @@ password `telegraph`…) don't exist in Firebase.
 
 1. In the [Firebase console](https://console.firebase.google.com/) create a project, add a
    **Web app**, enable **Authentication** (Email/Password and Google) and **Cloud Firestore**.
+   To let people attach media, also enable **Cloud Storage** (Build › Storage). Firebase only
+   offers it on the pay-as-you-go **Blaze** plan, which still has a no-cost usage tier; without
+   it, tweets work as before and only the upload fails.
 2. Copy the web app config into `.env.local` (see `.env.example`). It is not secret: the
    security rules protect the data.
 3. Deploy the rules and indexes (`firebase.json` and `.firebaserc` already point at the project):
 
    ```bash
    npx firebase-tools login
-   npx firebase-tools deploy --only firestore:rules,firestore:indexes
+   npx firebase-tools deploy --only firestore:rules,firestore:indexes,storage
    ```
 
    Indexes take a few minutes to build; until then the lists fail with "requires an index".
+   The `storage` target fails until Cloud Storage is enabled; deploy only the Firestore ones
+   meanwhile.
 
 ### Data model
 
 Three collections (`src/services/firebase/collections.ts`); the rules are in `firestore.rules`.
+The media files themselves live in Cloud Storage (`storage.rules`), see below.
 
 | Collection / document id            | Fields                                                                                                  | Notes                                                                                             |
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | `users/{usernameLower}`             | `uid`, `fullName`, `username`, `email`, `createdAt`                                                     | The key makes a username unique and lets the login find the email of a username.                  |
-| `tweets/{autoId}`                   | `authorId`, `authorFullName`, `authorUsername`, `body`, `createdAt`                                     | Author's name copied in, so a feed needs no joins. Never edited or deleted.                       |
+| `tweets/{autoId}`                   | `authorId`, `authorFullName`, `authorUsername`, `body`, `createdAt`, `media` (only with media)          | Author's name copied in, so a feed needs no joins. Never edited or deleted.                       |
 | `follows/{followerId}_{followeeId}` | `followerId/Username/FullName/FullNameLower`, `followeeId/Username/FullName/FullNameLower`, `createdAt` | One document per follow: the id rules out duplicates. `...FullNameLower` is the alphabetical key. |
 
 Decisions and trade-offs:
@@ -111,6 +118,40 @@ Decisions and trade-offs:
 - **Tweet length is counted in code points** (an emoji is one character) in the UI, the service and
   the rules. The rules use `body.matches('(?s)^.{1,280}$')`, because `size()` counts UTF-16 units
   and would count an emoji twice.
+
+### Pictures, GIFs and videos
+
+A tweet may carry one file: `media` is `{ kind: 'image' | 'gif' | 'video', url, path }`, and then
+the text is optional (an empty `body` is only allowed with `media`; the 280 limit stays). The UI
+uploads the file first (`MediaService`, `src/services/firebase/firebaseMediaService.ts`) and then
+publishes the tweet with the attachment it returns. `TweetCard` shows it below the text.
+
+| Kind  | Accepted       | Largest | Shown as                          |
+| ----- | -------------- | ------- | --------------------------------- |
+| image | JPG, PNG, WebP | 5 MB    | `<img>`, loaded lazily            |
+| gif   | GIF            | 10 MB   | `<img>`, loaded lazily            |
+| video | MP4, WebM      | 20 MB   | `<video controls>`, metadata only |
+
+The types and sizes live in `src/domain/media.ts` and `constants.ts` and are repeated in
+`storage.rules` (`storageRules.test.ts` fails when they drift). SVG is not accepted: it can carry
+scripts.
+
+Decisions and trade-offs:
+
+- **Files go to `tweet-media/{uid}/{random}.{ext}`**, and `storage.rules` lets only that account
+  create files there, once: nothing is replaced or deleted.
+- **The tweet rule only accepts the author's own file.** `firestore.rules` (`isOwnMedia`) checks
+  that `path` and `url` point at `tweet-media/<the author's uid>/…` in Cloud Storage, so a tweet
+  can't embed links to other sites or to somebody else's uploads. It can't check what the file
+  contains, nor that the object exists.
+- **Anyone with a file's download URL can open it,** signed in or not: that is how Firebase
+  download URLs work (the token in the URL bypasses `storage.rules`). The URL travels inside the
+  tweet, which only signed-in users can read.
+- **A failed publish leaves its file behind.** The upload happens before the tweet is written and
+  the rules forbid deleting, so an orphan can only be removed with the Admin SDK.
+- **A video's length is not limited,** only its size.
+- **The demo tweets only link to their media** (see [Demo data](#demo-data)), so they have no
+  `path` and work without Cloud Storage. The Admin SDK that writes them skips the rules.
 
 ### Pagination and the feed
 

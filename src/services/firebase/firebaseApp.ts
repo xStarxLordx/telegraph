@@ -4,6 +4,7 @@
 import { getApps, initializeApp, type FirebaseOptions } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 import type { EnvironmentVariables } from '../../interfaces/firebase';
 
 /** Every environment variable the SDK needs, mapped to the config key it fills. */
@@ -43,4 +44,9 @@ export function getFirebaseAuth() {
 /** Cloud Firestore for the app (the SDK returns the same instance on every call). */
 export function getFirebaseDb() {
   return getFirestore(getFirebaseApp());
+}
+
+/** Cloud Storage for the app, in the bucket named by `VITE_FIREBASE_STORAGE_BUCKET`. */
+export function getFirebaseStorage() {
+  return getStorage(getFirebaseApp());
 }

@@ -83,7 +83,23 @@
     "submit": "Publicar",
     "published": "Tweet publicado.",
     "nearLimitAnnouncement": "Quedan pocos caracteres.",
-    "overLimitAnnouncement": "El tweet supera el límite de caracteres."
+    "overLimitAnnouncement": "El tweet supera el límite de caracteres.",
+    "media": {
+      "add": "Añadir foto, GIF o video",
+      "change": "Cambiar archivo",
+      "remove": "Quitar archivo",
+      "hint": "Foto JPG, PNG o WebP (hasta {{imageMax}} MB), GIF (hasta {{gifMax}} MB) o video MP4 o WebM (hasta {{videoMax}} MB). El texto es opcional si adjuntas algo.",
+      "preview": "Vista previa: {{name}}",
+      "uploading": "Subiendo archivo…",
+      "uploadProgress": "Subiendo: {{percent}} %"
+    }
+  },
+  "tweet": {
+    "media": {
+      "image": "Imagen publicada por {{name}}",
+      "gif": "GIF publicado por {{name}}",
+      "video": "Video publicado por {{name}}"
+    }
   },
   "feed": {
     "title": "Feed",
@@ -176,6 +192,8 @@
     "validation/password-too-short": "La contraseña debe tener al menos {{passwordMin}} caracteres.",
     "validation/tweet-empty": "El tweet no puede estar vacío.",
     "validation/tweet-too-long": "El tweet puede tener como máximo {{tweetMax}} caracteres.",
+    "validation/media-unsupported": "Ese archivo no es compatible. Usa una foto JPG, PNG o WebP, un GIF o un video MP4 o WebM.",
+    "validation/media-too-large": "El archivo es demasiado grande. Máximo: {{imageMax}} MB para fotos, {{gifMax}} MB para GIF y {{videoMax}} MB para video.",
     "validation/passwords-mismatch": "Las contraseñas no coinciden."
   },
   "followByUsername": {

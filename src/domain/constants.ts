@@ -6,6 +6,18 @@ export const PAGE_SIZE = 10;
 /** Max tweet length in Unicode code points (G-10). */
 export const MAX_TWEET_LENGTH = 280;
 
+const MEGABYTE = 1024 * 1024;
+/**
+ * Largest file a tweet can attach, per kind of media, in MB. `storage.rules` repeats these in
+ * bytes (`storageRules.test.ts` fails when they drift).
+ */
+export const MAX_IMAGE_MB = 5;
+export const MAX_GIF_MB = 10;
+export const MAX_VIDEO_MB = 20;
+export const MAX_IMAGE_BYTES = MAX_IMAGE_MB * MEGABYTE;
+export const MAX_GIF_BYTES = MAX_GIF_MB * MEGABYTE;
+export const MAX_VIDEO_BYTES = MAX_VIDEO_MB * MEGABYTE;
+
 /** People shown in the search box dropdown. */
 export const SUGGESTION_COUNT = 5;
 /** Newest accounts the "people you may want to follow" list is picked from. */

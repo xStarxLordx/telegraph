@@ -1,7 +1,10 @@
 // Maps errors and error codes to translation keys. The UI never shows or parses messages.
 import {
   FULL_NAME_MAX_LENGTH,
+  MAX_GIF_MB,
+  MAX_IMAGE_MB,
   MAX_TWEET_LENGTH,
+  MAX_VIDEO_MB,
   PASSWORD_MIN_LENGTH,
   USERNAME_MAX_LENGTH,
   USERNAME_MIN_LENGTH,
@@ -27,6 +30,9 @@ export const ERROR_MESSAGE_VALUES = Object.freeze({
   usernameMax: USERNAME_MAX_LENGTH,
   fullNameMax: FULL_NAME_MAX_LENGTH,
   tweetMax: MAX_TWEET_LENGTH,
+  imageMax: MAX_IMAGE_MB,
+  gifMax: MAX_GIF_MB,
+  videoMax: MAX_VIDEO_MB,
 });
 
 /**
